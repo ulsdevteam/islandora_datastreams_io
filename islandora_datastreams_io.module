@@ -1,0 +1,64 @@
+<?php
+
+// Permissions.
+define('ISLANDORA_DATASTREAMS_IO', 'datastreams input output');
+
+/**
+ * Implements hook_menu().
+ */
+function islandora_datastreams_io_menu() {
+  return array(
+    'admin/islandora/datastreams_io' => array(
+      'title' => 'Islandora Datastreams I/O',
+      'description' => 'Settings for the Islandora Datastreams Input / Output module.',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('islandora_datastreams_io_admin_form'),
+      'access arguments' => array(ISLANDORA_DATASTREAMS_IO),
+      'file' => 'includes/admin.form.inc',
+    ),
+    'islandora/datastreams_io/export/batch/%' => array(
+      'title' => t('Export Batch'),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('islandora_datastreams_io_export_batch_form', 4),
+      'type' => MENU_CALLBACK,
+      'file' => 'includes/export.batch.form.inc',
+      'access arguments' => array(ISLANDORA_DATASTREAMS_IO),
+    ),
+    'islandora/datastreams_io/export' => array(
+      'title' => t('Export Batch'),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('islandora_datastreams_io_export_form'),
+      'type' => MENU_CALLBACK,
+      'file' => 'includes/export.form.inc',
+      'access arguments' => array(ISLANDORA_DATASTREAMS_IO),
+    ),
+  );
+}
+
+/**
+ * Implements hook_permission().
+ */
+function islandora_datastreams_io_permission() {
+  return array(
+    ISLANDORA_DATASTREAMS_IO => array(
+      'title' => t('Use the datastreams import and export tool'),
+      'description' => t('User can import / export selected datastreams per collection, model type, Solr query (if installed), or by batch CSV (if upitt_workflow installed).'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_presprocess_theme().
+ *
+ * This code will remove the sidebar and must check to see whether or not the path is on a user page.
+ */
+function islandora_datastreams_io_preprocess_page(&$vars) {
+  $item = menu_get_item();
+  if (is_array($item)) {
+    if ($item['path'] == 'islandora/datastreams_io/export/batch/%' ||
+        $item['path'] == 'islandora/datastreams_io/export') {
+      $path = drupal_get_path('module', 'islandora_datastreams_io');
+      drupal_add_js($path . '/js/batch_functions.js');
+    }
+  }
+}

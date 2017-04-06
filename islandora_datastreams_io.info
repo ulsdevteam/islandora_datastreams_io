@@ -1,0 +1,8 @@
+name = Islandora Datastreams Export Utility
+package = Islandora Tools
+description = To prepare folders of objects for ingest into Islandora.
+version = 7.x
+core = 7.x
+dependencies[] = islandora
+dependencies[] = islandora_datastream_crud
+configure = admin/islandora/datastreams_io
