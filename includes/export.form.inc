@@ -1,33 +1,27 @@
 <?php
 
-function islandora_datastreams_io_export_form(array $form, array &$form_state) {
-  dpm('solr = [' . $solr . ']');
-  dpm('upitt_workflow_batch = [' . $upitt_workflow_batch . ']');
+function islandora_datastreams_io_export_form(array $form, array &$form_state, $batch = NULL) {
   module_load_include('inc', 'upitt_workflow', 'includes/utilities');
 
-  $fetch_methods = array(0 => 'Solr query', 1 => 'Batch CSV', 2 => 'Collection', 3 => 'Model');
+  $fetch_methods = array(0 => 'Solr query', 1 => 'List of PID values', 2 => 'Collection', 3 => 'Model');
   if (!module_exists('islandora_solr')) {
     unset($fetch_methods[0]);
   }
 
-  if (module_exists('upitt_workflow')) {
-    $batch_id = ((is_numeric($batch)) ? $batch : upitt_workflow_get_batch_id($batch, FALSE));
-    if ($batch_id) {
-      $batch = upitt_workflow_batch_load($batch_id);
-      $csv_arr = upitt_workflow_csv_file_as_array($batch['file']);
-      $pid_values = upitt_workflow_csv_extract_identifiers($csv_arr);
-      $pids = array();
-      foreach ($pid_values as $p) {
-        $pids[]['PID'] = $p;
-      }
-    }
-
-    $batch_path = ($batch_id ? upitt_workflow_batch_export_path($batch['batch_external_id']) : 'batch_id_NOT_SET');
+  $pids_attributes = array();
+  $pid_values = (isset($_SESSION['pids'])) ? json_decode($_SESSION['pids'], true) : array();
+  // This will set the radio button to the appropriate choice for fetch method, and
+  // the javascript will hide / show the appropriate form elements.
+  if (isset($_SESSION['pids'])) {
+    $form_state['input']['pids_fetch_method']  = 1;
+    unset($_SESSION['pids']);
+    $pids_attributes['readonly'] = 'readonly';
+    $pids_attributes['disabled'] = 'disabled';
   }
 
   $tmp_model_options = upitt_workflow_get_models();
   $datastreams = upitt_workflow_get_datastreams();
-  
+
   $tmp_collections = upitt_workflow_get_solr_options('RELS_EXT_hasModel_uri_ms:info\:fedora\/islandora\:collectionCModel', 'PID', 'fgs_label_s');
   asort($tmp_collections);
 
@@ -39,22 +33,14 @@ function islandora_datastreams_io_export_form(array $form, array &$form_state) {
     $model_options['info:fedora/' . $k] = $model;
   }
 
-  $markup_export = '<p>' . t('This will allow a specific datastream from a given set of objects to be exported to a folder under ' .
-          '<code>' . $batch_path . '</code>.  A set of objects can be defined by a Solr query, by collection membership, by content ' .
-          'model, or by the identifiers of the CSV associated with a batch.') . '</p>';
+  $markup_export = '<p>' . t('This will allow a specific datastream from a given set of objects to be downloaded. ' .
+          'A set of objects can be defined by a Solr query, by collection membership, by content ' .
+          'model, or by a list of PID values.') . '</p>';
 
   $form['exportform'] = array(
     'form_description' => array('#markup' => $markup_export),
     'breadcrumb' => array('#markup' => upitt_workflow_get_breadcrumb_path()),
 
-    'pid_tmp_file' => array(
-      '#type' => 'hidden',
-      '#default_value' => '/tmp/batch_export_' . date('YmdHis') . '_' . $batch_id,
-    ),
-    'batch_id' => array(
-      '#type' => 'hidden',
-      '#default_value' => $batch_id,
-    ),
     'pids' => array(
       '#type' => 'hidden',
       '#default_value' => implode('
@@ -65,12 +51,12 @@ function islandora_datastreams_io_export_form(array $form, array &$form_state) {
       '#type' => 'fieldset',
       '#title' => t('Datastream'),
       '#collapsible' => TRUE,
-      '#description' => t('Select which datastream to export.'),
+      '#description' => t('Select which datastream to export.  '),
       '#group' => 'exportform',
 
       'datastream' => array(
         '#type' => 'select',
-        '#description' => 'Select datastream',
+        '#description' => 'Select datastream to export.  Note: it is possible to export fewer datastreams than objects because not all objects have all datastreams.',
         '#title' => t('Datastream'),
         '#options' => $datastreams,
         '#default_value' => (isset($form_state['input']['datastream']) ? $form_state['input']['datastream'] : ''),
@@ -83,7 +69,7 @@ function islandora_datastreams_io_export_form(array $form, array &$form_state) {
       '#type' => 'fieldset',
       '#title' => t('Select objects'),
       '#collapsible' => TRUE,
-      '#description' => t('For the export, select only one method to select the objects.'),
+      '#description' => t('For the export, select the method to select the objects.'),
 
       'pids_fetch_method' => array(
         '#type' => 'radios',
@@ -95,15 +81,19 @@ function islandora_datastreams_io_export_form(array $form, array &$form_state) {
         '#type' => 'textarea',
         '#title' => t('Solr query'),
         '#default_value' => (isset($form_state['input']['solr_query']) ? $form_state['input']['solr_query'] : ''),
+        '#description' => 'Use the query "q" section of any Solr query - ' .
+          l(variable_get('islandora_solr_url', 'localhost:8080/solr'), variable_get('islandora_solr_url', 'localhost:8080/solr')) .
+          ' do not try to use filter queries "fq" or field lists "fl" or any special Solr options for this query.',
         '#group' => 'exportform',
       ),
 
-      'batch_csv' => array(
-        '#type' => 'textfield',
-        '#title' => t('Batch'),
-        '#attributes' => array('readonly' => 'readonly', 'disabled' => 'disabled'),
-        '#description' => t('Batch CSV file') . ((count($pids) > 0) ? theme('table', array('rows'=>$pids,'header'=>array(0=>'PID'),'attributes' =>array('class'=>array('report_table')))) : ''),
-        '#default_value' => ($batch && isset($batch['file']))? $batch['file'] : '',
+      'list_of_pids' => array(
+        '#type' => 'textarea',
+        '#title' => t('PID values'),
+        '#attributes' => $pids_attributes,
+        '#description' => t('PID values, one on each line.'),
+        '#default_value' => implode('
+', $pid_values),
         '#group' => 'exportform',
       ),
 
@@ -142,12 +132,11 @@ function islandora_datastreams_io_export_form_submit(array $form, array &$form_s
 
   $pids_fetch_method = $form_state['values']['pids_fetch_method'];
   $batch_id = $form_state['values']['batch_id'];
-  $pids_file = $form_state['values']['pid_tmp_file'];
   $pids = NULL;
 
   $batch_path = ($batch_id ? upitt_workflow_batch_export_path($batch['batch_external_id']) : 'batch_id_NOT_SET');
   $export_csv_file = $batch_path . '/csv_export_file.csv';
-  
+
   // Depending on the pids_fetch_method value, the PID values are derived one of 4 different ways:
   switch ($pids_fetch_method) {
     // 0 - Solr query
@@ -155,12 +144,13 @@ function islandora_datastreams_io_export_form_submit(array $form, array &$form_s
       $solr_query = $form_state['values']['solr_query'];
       drupal_set_message('Lookup PIDS for Solr query: "' . $solr_query . '"');
       $pids = upitt_workflow_get_pids_solr_query($solr_query);
+      drupal_set_message('Solr query PIDS: "' . $pids . '"');
       break;
 
     // 1 - Batch CSV
     case 1:
       $pids = $form_state['values']['pids'];
-      drupal_set_message('PIDS from batch spreadsheet: "' . $pids . '"');
+      drupal_set_message('List of PIDS: "' . $pids . '"');
       break;
 
     // 2 - Collection
@@ -168,6 +158,7 @@ function islandora_datastreams_io_export_form_submit(array $form, array &$form_s
       $collection = $form_state['values']['collection'];
       drupal_set_message('Lookup PIDS for Collection: "' . $collection . '"');
       $pids = upitt_workflow_get_pids_collection($collection);
+      drupal_set_message('Collection PIDS: "' . $pids . '"');
       break;
 
     // 3 - Model
@@ -175,6 +166,7 @@ function islandora_datastreams_io_export_form_submit(array $form, array &$form_s
       $model = $form_state['values']['model'];
       drupal_set_message('Lookup PIDS for fedora Model: "' . $model . '"');
       $pids = upitt_workflow_get_pids_model($model);
+      drupal_set_message('Model PIDS: "' . $pids . '"');
       break;
   }
   if ($pids) {

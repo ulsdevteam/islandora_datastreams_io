@@ -16,16 +16,8 @@ function islandora_datastreams_io_menu() {
       'access arguments' => array(ISLANDORA_DATASTREAMS_IO),
       'file' => 'includes/admin.form.inc',
     ),
-    'islandora/datastreams_io/export/batch/%' => array(
-      'title' => t('Export Batch'),
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('islandora_datastreams_io_export_batch_form', 4),
-      'type' => MENU_CALLBACK,
-      'file' => 'includes/export.batch.form.inc',
-      'access arguments' => array(ISLANDORA_DATASTREAMS_IO),
-    ),
     'islandora/datastreams_io/export' => array(
-      'title' => t('Export Batch'),
+      'title' => t('Export Datastreams'),
       'page callback' => 'drupal_get_form',
       'page arguments' => array('islandora_datastreams_io_export_form'),
       'type' => MENU_CALLBACK,
