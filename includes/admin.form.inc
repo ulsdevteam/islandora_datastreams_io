@@ -2,11 +2,11 @@
 
 /**
  * @file
- * Administration forms and submit handling for isMemberOfSite module.
+ * Administration forms and submit handling for Islandora Datastreams I/O module.
  */
 
 /**
- * Administration and configuration form for memberofsite.
+ * Administration and configuration form for islandora_datastreams_io.
  *
  * @ingroup forms
  *

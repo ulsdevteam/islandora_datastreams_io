@@ -9,3 +9,8 @@ without any prompting.
 TODO: This module will need to extend the options based on what is installed.  In other words, if 
 islandora_solr is installed, provide the option to import / export using a Solr query... if the 
 upitt_workflow module is installed, provide the option to import / export using a batch.
+
+The PID values can be passed from other modules by setting the $_SESSION['pids'] value before 
+redirecting to the islandora/datastreams_io/export page.  Doing this will make the PIDS field 
+read-only and set the "Select Objects" mode to "List of PID values".
+

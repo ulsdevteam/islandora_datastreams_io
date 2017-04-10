@@ -56,7 +56,10 @@ function islandora_datastreams_io_export_form(array $form, array &$form_state, $
 
       'datastream' => array(
         '#type' => 'select',
-        '#description' => 'Select datastream to export.  Note: it is possible to export fewer datastreams than objects because not all objects have all datastreams.',
+        '#description' => 'Select datastream to export.  It is possible to export ' .
+          'fewer datastreams than objects because not all objects have all datastreams.<ul>' .
+          '<li>It may take a very long time to export a large number of objects or ' .
+          'to export larger datastreams such as OBJ, JPG, AVI, MP4, etc.</li></ul>',
         '#title' => t('Datastream'),
         '#options' => $datastreams,
         '#default_value' => (isset($form_state['input']['datastream']) ? $form_state['input']['datastream'] : ''),
@@ -128,14 +131,11 @@ function islandora_datastreams_io_export_form(array $form, array &$form_state, $
 }
 
 function islandora_datastreams_io_export_form_submit(array $form, array &$form_state) {
+  module_load_include('inc', 'islandora_datastreams_io', 'includes/utilities');
   global $user;
 
   $pids_fetch_method = $form_state['values']['pids_fetch_method'];
-  $batch_id = $form_state['values']['batch_id'];
   $pids = NULL;
-
-  $batch_path = ($batch_id ? upitt_workflow_batch_export_path($batch['batch_external_id']) : 'batch_id_NOT_SET');
-  $export_csv_file = $batch_path . '/csv_export_file.csv';
 
   // Depending on the pids_fetch_method value, the PID values are derived one of 4 different ways:
   switch ($pids_fetch_method) {
@@ -170,27 +170,64 @@ function islandora_datastreams_io_export_form_submit(array $form, array &$form_s
       break;
   }
   if ($pids) {
-    $rm_command = 'rm /tmp/batch_export_*_' . $batch_id;
-    exec($rm_command);
+    // This process may take more time to complete.
+    set_time_limit(0);
+    $export_path = 'datastream_io_datastreams_' . date('His_hms');
+    chdir(file_directory_temp());
+    mkdir($export_path);
+    $full_export_path = file_directory_temp() . '/' . $export_path;
+    $zip_name = $full_export_path . '/file.zip';
+
     $this_domain = 'http://' . $_SERVER['HTTP_HOST'];
 
+    $script_base = str_replace('/index.php', '', $_SERVER['SCRIPT_FILENAME']);
+    $SETTINGS_PATH = $script_base . '/' . conf_path(TRUE);
+
+    chdir($SETTINGS_PATH);
+
+    $pids_file = tempnam(file_directory_temp(), 'pids_file.txt');
     file_put_contents($pids_file, $pids);
+
     $datastream = $form_state['values']['datastream'];
     $drush_command = 'drush islandora_datastream_crud_fetch_datastreams -u ' . $user->uid .
                      ' --pid_file=' . $pids_file . ' --dsid=' . $datastream .
-                     ' --datastreams_directory=' . $batch_path .
+                     ' --datastreams_directory=' . $full_export_path .
                      ' --silent=1 ' .
                      ' --uri=' . $this_domain;
+
     $output = $return_var = array();
     exec($drush_command, $output, $return_var);
     if ($return_var == -1 || $return_var == 255) {
       drupal_set_message('There was an error calling the drush command : ' . $drush_command);
     }
+
+    drupal_set_message($drush_command);
+    
+    $files = islandora_datastreams_io_get_exported_files($full_export_path);
+    chdir($full_export_path);
+    $zip = new ZipArchive;
+    $zip->open($zip_name, ZipArchive::CREATE);
+    foreach ($files as $file) {
+      $zip->addFile($file);
+    }
+    $zip->close();
+
+    $base64_zip_name = base64_encode($zip_name);
+    $zip_size = filesize($zip_name);
+    $download_link = l('Download ZIP export', 'islandora/datastreams_io/download_export/' . $base64_zip_name);
+
+    drupal_set_message('The export of datastreams is complete.  ' . $download_link . ' ' . islandora_datastreams_io_human_filesize($zip_size));
+
+    // Remove the temporary files
+    unlink($pids_file);
   }
   else {
-    drupal_set_message(t('There were no PID values for this export.  ' . $pids_file . ' Please try again.'));
+    drupal_set_message(t('There were no PID values for this export.  Please try again.'));
   }
-
-  //  $form_state['redirect'] = '/workflow/batch/' . $batch_id;
 }
 
+function islandora_datastreams_io_human_filesize($bytes, $decimals = 2) {
+  $sz = 'BKMGTP';
+  $factor = floor((strlen($bytes) - 1) / 3);
+  return sprintf("%.{$decimals}f", $bytes / pow(1024, $factor)) . @$sz[$factor];
+}

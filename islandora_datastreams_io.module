@@ -24,6 +24,21 @@ function islandora_datastreams_io_menu() {
       'file' => 'includes/export.form.inc',
       'access arguments' => array(ISLANDORA_DATASTREAMS_IO),
     ),
+    'islandora/datastreams_io/download_export/%' => array(
+      'title' => t('Download export'),
+      'page callback' => 'islandora_datastreams_download_export',
+      'page arguments' => array(3),
+      'file' => 'includes/download_export.inc',
+      'access arguments' => array(ISLANDORA_DATASTREAMS_IO),
+    ),
+    'islandora/datastreams_io/import' => array(
+      'title' => t('Import Datastreams'),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('islandora_datastreams_io_import_form'),
+      'type' => MENU_CALLBACK,
+      'file' => 'includes/import.form.inc',
+      'access arguments' => array(ISLANDORA_DATASTREAMS_IO),
+    ),
   );
 }
 
