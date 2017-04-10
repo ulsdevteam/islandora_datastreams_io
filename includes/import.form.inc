@@ -185,14 +185,10 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
     if (count($files) > 0) {
       $files_markup = '';
       foreach ($files as $file) {
-        
-        @list($namespace, $restofthepid, $dsid) = explode('_', $file);
-        $this_pid = $namespace . ':' . $restofthepid;
-        $filename_pid_removed = ltrim(str_replace($namespace . '_' . $restofthepid, '', $file), '_');
-        $path_parts = pathinfo($filename_pid_removed);
-        $dsid = $path_parts['filename'];
-
-        $files_markup .= 'PID = ' . $this_pid . ' DSID = ' . $dsid . '<br>';
+        $ds_fileparts = islandora_datastreams_io_ds_file_parts($file);
+        if (isset($ds_fileparts['pid']) && isset($ds_fileparts['namespace']) && isset($ds_fileparts['dsid'])) {
+          $files_markup .= 'PID = ' . $ds_fileparts['pid'] . ' DSID = ' . $ds_fileparts['dsid'] . '<br>';
+        }
         $file_count++;
       }
       if (!$do_push) {
