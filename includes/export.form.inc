@@ -3,20 +3,29 @@
 function islandora_datastreams_io_export_form(array $form, array &$form_state, $batch = NULL) {
   module_load_include('inc', 'upitt_workflow', 'includes/utilities');
 
-  $fetch_methods = array(0 => 'Solr query', 1 => 'List of PID values', 2 => 'Collection', 3 => 'Model');
-  if (!module_exists('islandora_solr')) {
-    unset($fetch_methods[0]);
-  }
-
   $pids_attributes = array();
-  $pid_values = (isset($_SESSION['pids'])) ? json_decode($_SESSION['pids'], true) : array();
+  $pids_fetch_method = isset($_SESSION['pids_fetch_method']) ? $_SESSION['pids_fetch_method'] : ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS;
+
+  $pid_values = (isset($_SESSION['pids_value']) && $pids_fetch_method == ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS) ?
+    json_decode($_SESSION['pids_value'], true) :
+    array();
   // This will set the radio button to the appropriate choice for fetch method, and
   // the javascript will hide / show the appropriate form elements.
-  if (isset($_SESSION['pids'])) {
-    $form_state['input']['pids_fetch_method']  = 1;
-    unset($_SESSION['pids']);
+  if (isset($_SESSION['pids_value']) && $pids_fetch_method == ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS) {
+    $form_state['input']['pids_fetch_method'] = $pids_fetch_method;
     $pids_attributes['readonly'] = 'readonly';
     $pids_attributes['disabled'] = 'disabled';
+  }
+
+  $default_pids_value = implode('
+', $pid_values);
+  $fetch_methods = array(ISLANDORA_DATASTREAMS_IO_FETCH_SOLR => 'Solr query',
+      ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS => 'List of PID values' .
+        ((count($pid_values) > 0) ? ' (' . count($pid_values) . ' PID value' . ((count($pid_values) == 1) ? '' : 's') . ' supplied)' : ''),
+      ISLANDORA_DATASTREAMS_IO_FETCH_COLLECTION => 'Collection',
+      ISLANDORA_DATASTREAMS_IO_FETCH_MODEL => 'Model');
+  if (!module_exists('islandora_solr')) {
+    unset($fetch_methods[0]);
   }
 
   $tmp_model_options = upitt_workflow_get_models();
@@ -43,8 +52,7 @@ function islandora_datastreams_io_export_form(array $form, array &$form_state, $
 
     'pids' => array(
       '#type' => 'hidden',
-      '#default_value' => implode('
-', $pid_values),
+      '#default_value' => $default_pids_value,
     ),
 
     'datastreamformset' => array(
@@ -83,7 +91,7 @@ function islandora_datastreams_io_export_form(array $form, array &$form_state, $
       'solr_query' => array(
         '#type' => 'textarea',
         '#title' => t('Solr query'),
-        '#default_value' => (isset($form_state['input']['solr_query']) ? $form_state['input']['solr_query'] : ''),
+        '#default_value' => (isset($form_state['input']['solr_query']) ? $form_state['input']['solr_query'] : $default_pids_value),
         '#description' => 'Use the query "q" section of any Solr query - ' .
           l(variable_get('islandora_solr_url', 'localhost:8080/solr'), variable_get('islandora_solr_url', 'localhost:8080/solr')) .
           ' do not try to use filter queries "fq" or field lists "fl" or any special Solr options for this query.',
@@ -95,8 +103,7 @@ function islandora_datastreams_io_export_form(array $form, array &$form_state, $
         '#title' => t('PID values'),
         '#attributes' => $pids_attributes,
         '#description' => t('PID values, one on each line.'),
-        '#default_value' => implode('
-', $pid_values),
+        '#default_value' => $default_pids_value,
         '#group' => 'exportform',
       ),
 
@@ -105,7 +112,7 @@ function islandora_datastreams_io_export_form(array $form, array &$form_state, $
         '#description' => 'Select collection',
         '#title' => t('Collection'),
         '#options' => $collections,
-        '#default_value' => (isset($form_state['input']['collection']) ? $form_state['input']['collection'] : ''),
+        '#default_value' => (isset($form_state['input']['collection']) ? $form_state['input']['collection'] : $default_pids_value),
         '#size' => 10,
         '#group' => 'exportform',
       ),
@@ -115,7 +122,7 @@ function islandora_datastreams_io_export_form(array $form, array &$form_state, $
         '#description' => 'Select model',
         '#title' => t('Model'),
         '#options' => $model_options,
-        '#default_value' => (isset($form_state['input']['model']) ? $form_state['input']['model'] : ''),
+        '#default_value' => (isset($form_state['input']['model']) ? $form_state['input']['model'] : $default_pids_value),
         '#size' => 7,
         '#group' => 'exportform',
       ),
@@ -137,24 +144,30 @@ function islandora_datastreams_io_export_form_submit(array $form, array &$form_s
   $pids_fetch_method = $form_state['values']['pids_fetch_method'];
   $pids = NULL;
 
+  // Unset the _SESSION value here.
+  if (isset($_SESSION['pids_value']) && isset($_SESSION['pids_fetch_method'])) {
+    unset($_SESSION['pids_value']);
+    unset($_SESSION['pids_fetch_method']);
+  }
+
   // Depending on the pids_fetch_method value, the PID values are derived one of 4 different ways:
   switch ($pids_fetch_method) {
     // 0 - Solr query
-    case 0:
+    case ISLANDORA_DATASTREAMS_IO_FETCH_SOLR:
       $solr_query = $form_state['values']['solr_query'];
       drupal_set_message('Lookup PIDS for Solr query: "' . $solr_query . '"');
       $pids = upitt_workflow_get_pids_solr_query($solr_query);
       drupal_set_message('Solr query PIDS: "' . $pids . '"');
       break;
 
-    // 1 - Batch CSV
-    case 1:
+    // 1 - List of PIDS
+    case ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS:
       $pids = $form_state['values']['pids'];
       drupal_set_message('List of PIDS: "' . $pids . '"');
       break;
 
     // 2 - Collection
-    case 2:
+    case ISLANDORA_DATASTREAMS_IO_FETCH_COLLECTION:
       $collection = $form_state['values']['collection'];
       drupal_set_message('Lookup PIDS for Collection: "' . $collection . '"');
       $pids = upitt_workflow_get_pids_collection($collection);
@@ -162,7 +175,7 @@ function islandora_datastreams_io_export_form_submit(array $form, array &$form_s
       break;
 
     // 3 - Model
-    case 3:
+    case ISLANDORA_DATASTREAMS_IO_FETCH_MODEL:
       $model = $form_state['values']['model'];
       drupal_set_message('Lookup PIDS for fedora Model: "' . $model . '"');
       $pids = upitt_workflow_get_pids_model($model);

@@ -1,6 +1,13 @@
 /**
  * @file
  * Javascript file for islandora_datastreams_io
+ * 
+ * The PHP code uses the constants for these 0, 1, 2, 3:
+ *       ISLANDORA_DATASTREAMS_IO_FETCH_SOLR = 0
+ *       ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS = 1
+ *       ISLANDORA_DATASTREAMS_IO_FETCH_COLLECTION = 2
+ *       ISLANDORA_DATASTREAMS_IO_FETCH_MODEL = 3
+ * 
  */
 
 (function ($) {

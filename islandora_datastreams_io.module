@@ -3,6 +3,12 @@
 // Permissions.
 define('ISLANDORA_DATASTREAMS_IO', 'datastreams input output');
 
+// pids_fetch_methods:
+define('ISLANDORA_DATASTREAMS_IO_FETCH_SOLR', 0);
+define('ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS', 1);
+define('ISLANDORA_DATASTREAMS_IO_FETCH_COLLECTION', 2);
+define('ISLANDORA_DATASTREAMS_IO_FETCH_MODEL', 3);
+
 /**
  * Implements hook_menu().
  */
@@ -68,4 +74,14 @@ function islandora_datastreams_io_preprocess_page(&$vars) {
       drupal_add_js($path . '/js/batch_functions.js');
     }
   }
+}
+
+/** 
+ * Helper function that will populate the PIDS and PIDS fetch method for the export form.
+ * This is intended to be called from units that want to pre-populate and use the export form.
+ */
+function islandora_datastreams_io_pids_to_export_form($pids_value, $pids_fetch_method) {
+  $_SESSION['pids_value'] = json_encode($pids_value);
+  $_SESSION['pids_fetch_method'] = $pids_fetch_method;
+  drupal_goto('/islandora/datastreams_io/export');
 }
