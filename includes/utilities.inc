@@ -25,3 +25,15 @@ function islandora_datastreams_io_ds_file_parts($filename) {
     return array();
   }
 }
+
+/**
+ * Delete the temporary uncompressed folder from zip file upload.
+ */
+function islandora_datastreams_io_dump_temp_dir($full_extract_path) {
+  $files = glob(rtrim($full_extract_path, '/') . '/*');
+  foreach($files as $file){
+    if(is_file($file))
+      unlink($file);
+  }
+  rmdir($full_extract_path);
+}

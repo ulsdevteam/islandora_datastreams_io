@@ -23,7 +23,6 @@ function islandora_datastreams_io_import_form(array $form, array &$form_state) {
 }
 
 function islandora_datastreams_io_import_pickfile($form, &$form_state) {
-  dpm($form_state);
   $markup_import = '<p>' . t('This will allow a specific datastream from a given set of objects to be downloaded. ' .
           'A set of objects can be defined by a Solr query, by collection membership, by content ' .
           'model, or by a list of PID values.') . '</p>';
@@ -34,7 +33,6 @@ function islandora_datastreams_io_import_pickfile($form, &$form_state) {
 
   $form['importform'] = array(
     'form_description' => array('#markup' => $markup_import),
-//    'breadcrumb' => array('#markup' => upitt_workflow_get_breadcrumb_path()),
 
     'file' => array(
       '#type' => 'file',
@@ -75,7 +73,9 @@ function islandora_datastreams_io_review_import_file(array $form, array &$form_s
   if ($uploaded_file_name && move_uploaded_file($uploaded_file_name, $tmp_name)) {
     $uploaded_file_name = $tmp_name;
   } else {
-    drupal_set_message('There was an error uploading the archive file.');
+    if ($do_push && !$uploaded_file_name) {
+      drupal_set_message('There was an error uploading the archive [' . $uploaded_file_name . ' :: ' . $tmp_name . '] file.');
+    }
   }
 
   $extract_path = 'datastream_io_datastreams_extract_' . date('His_hms');
@@ -91,20 +91,21 @@ function islandora_datastreams_io_review_import_file(array $form, array &$form_s
     '#type' => 'textfield',
     '#default_value' => $uploaded_file_name,
   );
-  $form['back'] = array(
-    '#type' => 'submit',
-    '#value' => t('Back')
-  );
-  $form['next'] = array(
-    '#type' => 'submit',
-    '#value' => t('Finish')
-  );
+  if (!$do_push) {
+    $form['back'] = array(
+      '#type' => 'submit',
+      '#value' => t('Back')
+    );
+    $form['next'] = array(
+      '#type' => 'submit',
+      '#value' => t('Finish')
+    );
+  }
 
   return $form;
 }
 
 function islandora_datastreams_io_import_form_submit(array $form, array &$form_state) {
-  dpm($form_state);
   switch ($form_state['stage']) {
     case 'complete':
       $form_state['multistep_values'][$form_state['stage']] = $form_state['values'];
@@ -179,20 +180,25 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
     $zip->extractTo($full_extract_path);
     $zip->close();
 
+    // unlink($filename);
+
     $file_count = 0;
     $markup .= '<h3>ZIP extraction ok.</h3>';
     $files = islandora_datastreams_io_get_exported_files($full_extract_path);
     if (count($files) > 0) {
       $files_markup = '';
+      $dsid = '';
       foreach ($files as $file) {
         $ds_fileparts = islandora_datastreams_io_ds_file_parts($file);
         if (isset($ds_fileparts['pid']) && isset($ds_fileparts['namespace']) && isset($ds_fileparts['dsid'])) {
           $files_markup .= 'PID = ' . $ds_fileparts['pid'] . ' DSID = ' . $ds_fileparts['dsid'] . '<br>';
         }
         $file_count++;
+        $dsid = (!$dsid && isset($ds_fileparts['dsid'])) ? $ds_fileparts['dsid'] : '';
       }
       if (!$do_push) {
         $markup .= '<h3>ZIP archive contains ' . number_format($file_count) . ' '. $dsid . ' Datastream/s</h3><pre>' . $files_markup . '</pre>';
+        islandora_datastreams_io_dump_temp_dir($full_extract_path);
       }
       else {
         $this_domain = 'http://' . $_SERVER['HTTP_HOST'];
@@ -209,6 +215,7 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
         else {
           $markup .= '<h3>' . $dsid . ' Datastreams Pushed: ' . number_format($file_count) . '</h3><pre>' . $files_markup . '</pre>';
         }
+        islandora_datastreams_io_dump_temp_dir($full_extract_path);
       }
     }
     else {

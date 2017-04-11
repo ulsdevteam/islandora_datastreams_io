@@ -2,6 +2,8 @@
 
 // Permissions.
 define('ISLANDORA_DATASTREAMS_IO', 'datastreams input output');
+define('ISLANDORA_DATASTREAMS_IO_EXPORT', 'datastreams output');
+define('ISLANDORA_DATASTREAMS_IO_IMPORT', 'datastreams input');
 
 // pids_fetch_methods:
 define('ISLANDORA_DATASTREAMS_IO_FETCH_SOLR', 0);
@@ -28,14 +30,15 @@ function islandora_datastreams_io_menu() {
       'page arguments' => array('islandora_datastreams_io_export_form'),
       'type' => MENU_CALLBACK,
       'file' => 'includes/export.form.inc',
-      'access arguments' => array(ISLANDORA_DATASTREAMS_IO),
+      'access arguments' => array(ISLANDORA_DATASTREAMS_IO_EXPORT),
     ),
+    // ZIP file download handler
     'islandora/datastreams_io/download_export/%' => array(
       'title' => t('Download export'),
       'page callback' => 'islandora_datastreams_download_export',
       'page arguments' => array(3),
       'file' => 'includes/download_export.inc',
-      'access arguments' => array(ISLANDORA_DATASTREAMS_IO),
+      'access arguments' => array(ISLANDORA_DATASTREAMS_IO_EXPORT),
     ),
     'islandora/datastreams_io/import' => array(
       'title' => t('Import Datastreams'),
@@ -43,7 +46,7 @@ function islandora_datastreams_io_menu() {
       'page arguments' => array('islandora_datastreams_io_import_form'),
       'type' => MENU_CALLBACK,
       'file' => 'includes/import.form.inc',
-      'access arguments' => array(ISLANDORA_DATASTREAMS_IO),
+      'access arguments' => array(ISLANDORA_DATASTREAMS_IO_IMPORT),
     ),
   );
 }
@@ -55,7 +58,16 @@ function islandora_datastreams_io_permission() {
   return array(
     ISLANDORA_DATASTREAMS_IO => array(
       'title' => t('Use the datastreams import and export tool'),
-      'description' => t('User can import / export selected datastreams per collection, model type, Solr query (if installed), or by batch CSV (if upitt_workflow installed).'),
+      'description' => t('User can import / export selected datastreams per ' .
+        'collection, model type, Solr query (if installed), or by list of PID values.'),
+    ),
+    ISLANDORA_DATASTREAMS_IO_EXPORT => array(
+      'title' => t('Use to export object datastreams.'),
+      'description' => t('User can export selected objects\' datastreams.'),
+    ),
+    ISLANDORA_DATASTREAMS_IO_IMPORT => array(
+      'title' => t('Use the import object datastreams.'),
+      'description' => t('User can import selected objects\' datastreams.'),
     ),
   );
 }

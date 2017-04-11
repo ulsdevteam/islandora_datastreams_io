@@ -157,13 +157,11 @@ function islandora_datastreams_io_export_form_submit(array $form, array &$form_s
       $solr_query = $form_state['values']['solr_query'];
       drupal_set_message('Lookup PIDS for Solr query: "' . $solr_query . '"');
       $pids = upitt_workflow_get_pids_solr_query($solr_query);
-      drupal_set_message('Solr query PIDS: "' . $pids . '"');
       break;
 
     // 1 - List of PIDS
     case ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS:
       $pids = $form_state['values']['pids'];
-      drupal_set_message('List of PIDS: "' . $pids . '"');
       break;
 
     // 2 - Collection
@@ -171,7 +169,6 @@ function islandora_datastreams_io_export_form_submit(array $form, array &$form_s
       $collection = $form_state['values']['collection'];
       drupal_set_message('Lookup PIDS for Collection: "' . $collection . '"');
       $pids = upitt_workflow_get_pids_collection($collection);
-      drupal_set_message('Collection PIDS: "' . $pids . '"');
       break;
 
     // 3 - Model
@@ -179,7 +176,6 @@ function islandora_datastreams_io_export_form_submit(array $form, array &$form_s
       $model = $form_state['values']['model'];
       drupal_set_message('Lookup PIDS for fedora Model: "' . $model . '"');
       $pids = upitt_workflow_get_pids_model($model);
-      drupal_set_message('Model PIDS: "' . $pids . '"');
       break;
   }
   if ($pids) {
@@ -214,8 +210,6 @@ function islandora_datastreams_io_export_form_submit(array $form, array &$form_s
       drupal_set_message('There was an error calling the drush command : ' . $drush_command);
     }
 
-    drupal_set_message($drush_command);
-    
     $files = islandora_datastreams_io_get_exported_files($full_export_path);
     chdir($full_export_path);
     $zip = new ZipArchive;

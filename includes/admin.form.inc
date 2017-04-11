@@ -16,28 +16,34 @@
  *   The Drupal form definition.
  */
 function islandora_datastreams_io_admin_form() {
+  module_load_include('inc', 'islandora_datastream_crud', 'islandora_datastream_crud.drush');
+  $islandora_datastream_crud_drush_commands = @islandora_datastream_crud_drush_command();
+  $bold_commands = array('islandora_datastream_crud_fetch_datastreams', 'islandora_datastream_crud_push_datastreams');
+  foreach ($islandora_datastream_crud_drush_commands as $command => $command_params) {
+    $bold_wrap_pre = ((array_search($command, $bold_commands) === FALSE) ? '' : '<strong>');
+    $bold_wrap_post = ((array_search($command, $bold_commands) === FALSE) ? '' : '</strong>');
+    $commands[$command] = $bold_wrap_pre . $command . $bold_wrap_post . (isset($command_params['description']) ? '<br>' . $command_params['description'] : '');
+  }
+
+  $about_islandora_datastreams_io_markup = '<p>' . l('Export','islandora/datastreams_io/export'). ' - export a ZIP ' .
+          'file of object datastreams.</p>' .
+          '<p>' . l('Import','islandora/datastreams_io/import'). ' - upload ZIP of object datastreams.</p>' .
+          '<p>This module provides a convenient web ' .
+          'wrapper for several of the drush functions provided by islandora_datastream_crud.</p>' .
+          '<ul><li>' . implode('</li><li>', $commands) . '</li></ul>';
+
   $form = array(
-    'incoming_ingest_path' => array(
-      '#type' => 'textfield',
-      '#title' => t('Input Path (imports)'),
-      '#description' => t('The incoming directory.'),
-      '#default_value' => variable_get('islandora_datastreams_io_ingest_path', '/ingest/incoming'),
-      '#size' => 100,
-    ),
-    'exports_ingest_path' => array(
-      '#type' => 'textfield',
-      '#title' => t('Output Path (exports)'),
-      '#description' => t('This output directory is where exported datastreams would be saved in a folder corresponding to the date, and the datastream identifier.'),
-      '#default_value' => variable_get('islandora_datastreams_io_export_path', '/ingest/tmp'),
-      '#size' => 100,
+    'frame' => array(
+      '#type' => 'fieldset',
+      '#title' => 'About Islandora Datastreams I/O',
+      'about' => array(
+        '#type' => 'item',
+        '#markup' => $about_islandora_datastreams_io_markup,
+      )
     ),
     'submit' => array(
       '#type' => 'submit',
-      '#value' => t('Save configuration'),
-    ),
-    'reset' => array(
-      '#type' => 'submit',
-      '#value' => t('Reset to defaults'),
+      '#value' => t('Return'),
     ),
   );
   return $form;
@@ -52,17 +58,13 @@ function islandora_datastreams_io_admin_form() {
  *   The Drupal form state.
  */
 function islandora_datastreams_io_admin_form_submit(array $form, array &$form_state) {
-  drupal_set_message(t('The settings have been updated!'));
   $id = $form_state['triggering_element']['#id'];
   switch ($id) {
     case 'edit-submit':
-      variable_set('islandora_datastreams_io_ingest_path', $form_state['values']['incoming_ingest_path']);
-      variable_set('islandora_datastreams_io_export_path', $form_state['values']['exports_ingest_path']);
+      drupal_goto('/admin/islandora');
       break;
 
     case 'edit-reset':
-      variable_del('islandora_datastreams_io_ingest_path');
-      variable_del('islandora_datastreams_io_export_path');
       break;
   }
 }
