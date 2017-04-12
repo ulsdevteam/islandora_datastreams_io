@@ -45,4 +45,8 @@ Given the ZIP file from the **Exporting Datastreams** step, the files can be man
 
 **IMPORTANT:** Do not change the filenames because the system needs the filename in order to know which object and datastream to replace.
 
+## Author / License
 
+Written by Brian Gillingham for the [University of Pittsburgh](http://www.pitt.edu).  Copyright (c) University of Pittsburgh.
+
+Released under a license of GPL v2 or later.
