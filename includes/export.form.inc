@@ -5,7 +5,6 @@ function islandora_datastreams_io_export_form(array $form, array &$form_state, $
 
   $pids_attributes = array();
   $pids_fetch_method = isset($_SESSION['pids_fetch_method']) ? $_SESSION['pids_fetch_method'] : ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS;
-
   $pid_values = (isset($_SESSION['pids_value']) && $pids_fetch_method == ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS) ?
     json_decode($_SESSION['pids_value'], true) :
     array();
@@ -161,7 +160,7 @@ function islandora_datastreams_io_export_form_submit(array $form, array &$form_s
 
     // 1 - List of PIDS
     case ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS:
-      $pids = $form_state['values']['pids'];
+      $pids = $form_state['values']['list_of_pids'];
       break;
 
     // 2 - Collection
@@ -196,14 +195,12 @@ function islandora_datastreams_io_export_form_submit(array $form, array &$form_s
 
     $pids_file = tempnam(file_directory_temp(), 'pids_file.txt');
     file_put_contents($pids_file, $pids);
-
     $datastream = $form_state['values']['datastream'];
     $drush_command = 'drush islandora_datastream_crud_fetch_datastreams -u ' . $user->uid .
                      ' --pid_file=' . $pids_file . ' --dsid=' . $datastream .
                      ' --datastreams_directory=' . $full_export_path .
                      ' --silent=1 ' .
                      ' --uri=' . $this_domain;
-
     $output = $return_var = array();
     exec($drush_command, $output, $return_var);
     if ($return_var == -1 || $return_var == 255) {
@@ -219,14 +216,19 @@ function islandora_datastreams_io_export_form_submit(array $form, array &$form_s
     }
     $zip->close();
 
-    $base64_zip_name = base64_encode($zip_name);
-    $zip_size = filesize($zip_name);
-    $download_link = l('Download ZIP export', 'islandora/datastreams_io/download_export/' . $base64_zip_name);
+    if (file_exists($zip_name)) {
+      $base64_zip_name = base64_encode($zip_name);
+      $zip_size = file_exists($zip_name) ? filesize($zip_name) : 0;
+      $download_link = l('Download ZIP export', 'islandora/datastreams_io/download_export/' . $base64_zip_name);
 
-    drupal_set_message('The export of datastreams is complete.  ' . $download_link . ' ' . islandora_datastreams_io_human_filesize($zip_size));
+      drupal_set_message('The export of datastreams is complete.  ' . $download_link . ' ' . islandora_datastreams_io_human_filesize($zip_size));
+    }
+    else {
+      drupal_set_message('The zip file could not be created.  It is possible that there were no matching datastreams for the selected objects', 'warning');
+    }
 
     // Remove the temporary files
-    unlink($pids_file);
+    @unlink($pids_file);
   }
   else {
     drupal_set_message(t('There were no PID values for this export.  Please try again.'));
