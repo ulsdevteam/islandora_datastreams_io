@@ -33,7 +33,7 @@ function islandora_datastreams_io_export_form(array $form, array &$form_state, $
 
   $tmp_collections = upitt_workflow_get_solr_options('RELS_EXT_hasModel_uri_ms:info\:fedora\/islandora\:collectionCModel', 'PID', 'fgs_label_s');
   asort($tmp_collections);
-
+  $collections = array();
   foreach ($tmp_collections as $k => $collection) {
     $collections['info:fedora/' . $k] = $collection;
   }
