@@ -1,10 +1,11 @@
 <?php
 
 function islandora_datastreams_io_export_form(array $form, array &$form_state, $batch = NULL) {
-  module_load_include('inc', 'upitt_workflow', 'includes/utilities');
+  module_load_include('inc', 'islandora_datastreams_io', 'includes/utilities');
 
   $pids_attributes = array();
   $pids_fetch_method = isset($_SESSION['pids_fetch_method']) ? $_SESSION['pids_fetch_method'] : ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS;
+
   $pid_values = (isset($_SESSION['pids_value']) && $pids_fetch_method == ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS) ?
     json_decode($_SESSION['pids_value'], true) :
     array();
@@ -27,10 +28,10 @@ function islandora_datastreams_io_export_form(array $form, array &$form_state, $
     unset($fetch_methods[0]);
   }
 
-  $tmp_model_options = upitt_workflow_get_models();
-  $datastreams = upitt_workflow_get_datastreams();
+  $tmp_model_options = islandora_datastreams_io_get_models();
+  $datastreams = islandora_datastreams_io_get_datastreams();
 
-  $tmp_collections = upitt_workflow_get_solr_options('RELS_EXT_hasModel_uri_ms:info\:fedora\/islandora\:collectionCModel', 'PID', 'fgs_label_s');
+  $tmp_collections = islandora_datastreams_io_get_solr_options('RELS_EXT_hasModel_uri_ms:info\:fedora\/islandora\:collectionCModel', 'PID', 'fgs_label_s');
   asort($tmp_collections);
   $collections = array();
   foreach ($tmp_collections as $k => $collection) {
@@ -47,7 +48,6 @@ function islandora_datastreams_io_export_form(array $form, array &$form_state, $
 
   $form['exportform'] = array(
     'form_description' => array('#markup' => $markup_export),
-    'breadcrumb' => array('#markup' => upitt_workflow_get_breadcrumb_path()),
 
     'pids' => array(
       '#type' => 'hidden',
@@ -155,26 +155,26 @@ function islandora_datastreams_io_export_form_submit(array $form, array &$form_s
     case ISLANDORA_DATASTREAMS_IO_FETCH_SOLR:
       $solr_query = $form_state['values']['solr_query'];
       drupal_set_message('Lookup PIDS for Solr query: "' . $solr_query . '"');
-      $pids = upitt_workflow_get_pids_solr_query($solr_query);
+      $pids = islandora_datastreams_io_get_pids_solr_query($solr_query);
       break;
 
     // 1 - List of PIDS
     case ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS:
-      $pids = $form_state['values']['list_of_pids'];
+      $pids = $form_state['values']['pids'];
       break;
 
     // 2 - Collection
     case ISLANDORA_DATASTREAMS_IO_FETCH_COLLECTION:
       $collection = $form_state['values']['collection'];
       drupal_set_message('Lookup PIDS for Collection: "' . $collection . '"');
-      $pids = upitt_workflow_get_pids_collection($collection);
+      $pids = islandora_datastreams_io_get_pids_collection($collection);
       break;
 
     // 3 - Model
     case ISLANDORA_DATASTREAMS_IO_FETCH_MODEL:
       $model = $form_state['values']['model'];
       drupal_set_message('Lookup PIDS for fedora Model: "' . $model . '"');
-      $pids = upitt_workflow_get_pids_model($model);
+      $pids = islandora_datastreams_io_get_pids_model($model);
       break;
   }
   if ($pids) {
@@ -195,12 +195,14 @@ function islandora_datastreams_io_export_form_submit(array $form, array &$form_s
 
     $pids_file = tempnam(file_directory_temp(), 'pids_file.txt');
     file_put_contents($pids_file, $pids);
+
     $datastream = $form_state['values']['datastream'];
     $drush_command = 'drush islandora_datastream_crud_fetch_datastreams -u ' . $user->uid .
                      ' --pid_file=' . $pids_file . ' --dsid=' . $datastream .
                      ' --datastreams_directory=' . $full_export_path .
                      ' --silent=1 ' .
                      ' --uri=' . $this_domain;
+
     $output = $return_var = array();
     exec($drush_command, $output, $return_var);
     if ($return_var == -1 || $return_var == 255) {
@@ -216,19 +218,14 @@ function islandora_datastreams_io_export_form_submit(array $form, array &$form_s
     }
     $zip->close();
 
-    if (file_exists($zip_name)) {
-      $base64_zip_name = base64_encode($zip_name);
-      $zip_size = file_exists($zip_name) ? filesize($zip_name) : 0;
-      $download_link = l('Download ZIP export', 'islandora/datastreams_io/download_export/' . $base64_zip_name);
+    $base64_zip_name = base64_encode($zip_name);
+    $zip_size = filesize($zip_name);
+    $download_link = l('Download ZIP export', 'islandora/datastreams_io/download_export/' . $base64_zip_name);
 
-      drupal_set_message('The export of datastreams is complete.  ' . $download_link . ' ' . islandora_datastreams_io_human_filesize($zip_size));
-    }
-    else {
-      drupal_set_message('The zip file could not be created.  It is possible that there were no matching datastreams for the selected objects', 'warning');
-    }
+    drupal_set_message('The export of datastreams is complete.  ' . $download_link . ' ' . islandora_datastreams_io_human_filesize($zip_size));
 
     // Remove the temporary files
-    @unlink($pids_file);
+    unlink($pids_file);
   }
   else {
     drupal_set_message(t('There were no PID values for this export.  Please try again.'));

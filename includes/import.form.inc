@@ -1,7 +1,7 @@
 <?php
 
 function islandora_datastreams_io_import_form(array $form, array &$form_state) {
-  module_load_include('inc', 'upitt_workflow', 'includes/utilities');
+  module_load_include('inc', 'islandora_datastreams_io', 'includes/utilities');
 
   if (!isset($form_state['stage'])) {
     $form_state['stage'] = 'import_pickfile';
