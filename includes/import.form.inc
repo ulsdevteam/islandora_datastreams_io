@@ -204,7 +204,7 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
         $this_domain = 'http://' . $_SERVER['HTTP_HOST'];
         $drush_command = 'drush islandora_datastream_crud_push_datastreams -u ' . $user->uid .
                          ' --datastreams_source_directory=' . $full_extract_path .
-                         ' --silent=1 ' .
+                         ' -y ' .
                          ' --uri=' . $this_domain;
 
         $output = $return_var = array();

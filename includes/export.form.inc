@@ -200,7 +200,7 @@ function islandora_datastreams_io_export_form_submit(array $form, array &$form_s
     $drush_command = 'drush islandora_datastream_crud_fetch_datastreams -u ' . $user->uid .
                      ' --pid_file=' . $pids_file . ' --dsid=' . $datastream .
                      ' --datastreams_directory=' . $full_export_path .
-                     ' --silent=1 ' .
+                     ' -y ' .
                      ' --uri=' . $this_domain;
 
     $output = $return_var = array();
