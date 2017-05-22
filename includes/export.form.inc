@@ -160,7 +160,7 @@ function islandora_datastreams_io_export_form_submit(array $form, array &$form_s
 
     // 1 - List of PIDS
     case ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS:
-      $pids = $form_state['values']['pids'];
+      $pids = $form_state['values']['list_of_pids'];
       break;
 
     // 2 - Collection
