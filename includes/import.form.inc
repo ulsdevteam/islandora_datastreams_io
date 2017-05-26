@@ -191,7 +191,9 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
       foreach ($files as $file) {
         $ds_fileparts = islandora_datastreams_io_ds_file_parts($file);
         if (isset($ds_fileparts['pid']) && isset($ds_fileparts['namespace']) && isset($ds_fileparts['dsid'])) {
-          $files_markup .= 'PID = ' . $ds_fileparts['pid'] . ' DSID = ' . $ds_fileparts['dsid'] . '<br>';
+          // output the values from $ds_parts - need to strip the ".xml" from the pid
+          $pid = str_replace(array("_" . $ds_fileparts['dsid'], ".xml"), "", $ds_fileparts['pid']);
+          $files_markup .= 'PID = ' . l($pid, '/islandora/object/' . $pid) . ' DSID = ' . $ds_fileparts['dsid'] . '<br>';
         }
         $file_count++;
         $dsid = (!$dsid && isset($ds_fileparts['dsid'])) ? $ds_fileparts['dsid'] : '';

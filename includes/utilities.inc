@@ -38,7 +38,12 @@ function islandora_datastreams_io_dump_temp_dir($full_extract_path) {
     if(is_file($file))
       unlink($file);
   }
-  rmdir($full_extract_path);
+  if (PHP_OS === 'Windows') {
+    exec(sprintf("rd /s /q %s", escapeshellarg($full_extract_path)));
+  }
+  else {
+    exec(sprintf("rm -rf %s", escapeshellarg($full_extract_path)));
+  }
 }
 
 function islandora_datastreams_deleteDirectory($dir) {
