@@ -1,4 +1,4 @@
-name = Islandora Datastreams Import/Output (export) Utility
+name = Islandora Datastreams Input/Output/Operations (export) Utility
 package = Islandora Tools
 description = To prepare folders of objects for ingest into Islandora.
 version = 7.x

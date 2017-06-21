@@ -17,12 +17,20 @@ define('ISLANDORA_DATASTREAMS_IO_FETCH_MODEL', 3);
 function islandora_datastreams_io_menu() {
   return array(
     'admin/islandora/datastreams_io' => array(
-      'title' => 'Islandora Datastreams I/O',
-      'description' => 'Settings for the Islandora Datastreams Input / Output module.',
+      'title' => 'Islandora Datastreams Input/Output & Object Relationships',
+      'description' => 'Settings for the Islandora Datastreams Input/Output & Object Relationships module.',
       'page callback' => 'drupal_get_form',
       'page arguments' => array('islandora_datastreams_io_admin_form'),
       'access arguments' => array(ISLANDORA_DATASTREAMS_IO),
       'file' => 'includes/admin.form.inc',
+    ),
+    'islandora/datastreams_io/relationships' => array(
+      'title' => t('Object Relationships'),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('islandora_datastreams_io_relationships_form'),
+      'type' => MENU_CALLBACK,
+      'file' => 'includes/relationships.form.inc',
+      'access arguments' => array(ISLANDORA_DATASTREAMS_IO_EXPORT),
     ),
     'islandora/datastreams_io/export' => array(
       'title' => t('Export Datastreams'),
@@ -81,7 +89,8 @@ function islandora_datastreams_io_preprocess_page(&$vars) {
   $item = menu_get_item();
   if (is_array($item)) {
     if ($item['path'] == 'islandora/datastreams_io/export/batch/%' ||
-        $item['path'] == 'islandora/datastreams_io/export') {
+        $item['path'] == 'islandora/datastreams_io/export' ||
+        $item['path'] == 'islandora/datastreams_io/relationships') {
       $path = drupal_get_path('module', 'islandora_datastreams_io');
       drupal_add_js($path . '/js/batch_functions.js');
     }
@@ -91,6 +100,12 @@ function islandora_datastreams_io_preprocess_page(&$vars) {
 /** 
  * Helper function that will populate the PIDS and PIDS fetch method for the export form.
  * This is intended to be called from units that want to pre-populate and use the export form.
+ *
+ * The allowable fetch methods are:
+ *   define('ISLANDORA_DATASTREAMS_IO_FETCH_SOLR', 0);
+   define('ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS', 1);
+   define('ISLANDORA_DATASTREAMS_IO_FETCH_COLLECTION', 2);
+   define('ISLANDORA_DATASTREAMS_IO_FETCH_MODEL', 3);
  */
 function islandora_datastreams_io_pids_to_export_form($pids_value, $pids_fetch_method) {
   $_SESSION['pids_value'] = json_encode($pids_value);

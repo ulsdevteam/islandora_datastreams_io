@@ -26,6 +26,9 @@
             hideall_but(3);
         });
         var i = $('input[name=pids_fetch_method]:checked', '#islandora-datastreams-io-export-form').val();
+        if (i == undefined) {
+            i = $('input[name=pids_fetch_method]:checked', '#islandora-datastreams-io-relationships-form').val();
+        } 
         hideall_but(i);
     });
   

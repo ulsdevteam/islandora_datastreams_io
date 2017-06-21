@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Administration forms and submit handling for Islandora Datastreams I/O module.
+ * Administration forms and submit handling for Islandora Datastreams Input/Output & Object Relationships module.
  */
 
 /**
@@ -28,14 +28,15 @@ function islandora_datastreams_io_admin_form() {
   $about_islandora_datastreams_io_markup = '<p>' . l('Export','islandora/datastreams_io/export'). ' - export a ZIP ' .
           'file of object datastreams.</p>' .
           '<p>' . l('Import','islandora/datastreams_io/import'). ' - upload ZIP of object datastreams.</p>' .
-          '<p>This module provides a convenient web ' .
+          '<p>' . l('Relationships','islandora/datastreams_io/relationships'). ' - add / remove a relationship to a set of objects.</p>' .
+          '<blockquote><p>This module provides a convenient web ' .
           'wrapper for several of the drush functions provided by islandora_datastream_crud.</p>' .
-          '<ul><li>' . implode('</li><li>', $commands) . '</li></ul>';
+          '<ul><li>' . implode('</li><li>', $commands) . '</li></ul></blockquote>';
 
   $form = array(
     'frame' => array(
       '#type' => 'fieldset',
-      '#title' => 'About Islandora Datastreams I/O',
+      '#title' => 'About Islandora Datastreams Input/Output & Object Relationships',
       'about' => array(
         '#type' => 'item',
         '#markup' => $about_islandora_datastreams_io_markup,
