@@ -141,11 +141,9 @@ function islandora_datastreams_io_relationships_form(array $form, array &$form_s
       ),
       'value' => array(
         '#type' => 'textfield',
-        '#title' => t('Namespace of relationship ontology'),
-        '#description' => t('The namespace of the relationship.  This value can be empty for the purpose ' .
-                'of setting an empty value - which is <b>not the same as removing the relationship</b>.  ' .
-                'For example, most relationships use the namespace value of "' . FEDORA_RELS_EXT_URI . '", but for the ' .
-                'isMemberOfSite relationship the namespace value must be "http://digital.library.pitt.edu/ontology/relations#".'),
+        '#title' => t('Value'),
+        '#description' => t('This value can be empty for the purpose ' .
+                'of setting an empty value - which is <b>not the same as removing the relationship</b>.'),
         '#default_value' => '',
       ),
     ),
