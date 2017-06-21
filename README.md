@@ -4,6 +4,8 @@ This module is mostlly just a web-ui wrapper for the islandora_datastream_crud m
 
 Since this module shells out to the drush commands from islandora_datastream_crud be sure to have the latest version of that module installed.
 
+**NOTE:** The module processes these updates in a loop that is determined by the list of PID values.  If there are more than a hundred objects to process, expect that it will take at least a minute to process the.
+
 ### Installing
 There are no options to configure for this module.  Once this module is installed, users can be configured to have permission to Import / Export datastreams using the "Use the datastreams import and export tool" `ISLANDORA_DATASTREAMS_IO` permission.  The export form is located /islandora/datastreams_io/export and the import form is located /islandora/datastreams_io/import.
 
@@ -43,7 +45,9 @@ Given the ZIP file from the **Exporting Datastreams** step, the files can be man
 ## Adding / Removing Relationships
 This feature allows a specific relationship to either be added or removed from a set of objects.  In order to use this, several parameters need to be provided.  These values should be familiar to developers because they correspond to two thirds of the triples that set the relationship to the object.  The other value stores the namespace related to the relationship ontology.  After this process runs, the status of the relationship updates are displayed on the screen.  The user should test that their relationships exist as they intended.
 
-For example, the "isMemberOfSite" relationship is related to the namespace value of "http://digital.library.pitt.edu/ontology/relations#".
+In order to make the relationship, the **predicate**, **namespace**, and **value** must be provided to make the triples relationship for the object (for each PID value provided to the set).
+
+For example, the "isMemberOfSite" relationship ontology is related to the namespace of "http://digital.library.pitt.edu/ontology/relations#".
 
 The relationship is skipped when it exists already in cases where it is being added, or if it does not exist in cases where it is being removed.
 
