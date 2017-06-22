@@ -245,7 +245,7 @@ function islandora_datastreams_io_relationships_form_submit(array $form, array &
     if (count($bad_pids) > 0) {
       drupal_set_message('At least one of the PID values were not able to be loaded as an object.  These are: \'' . implode("', '", $bad_pids) . '\'', 'warning');
     }
-    drupal_set_message('The relationship of "' . $predicate . '" = "' . $value . '" has been ' . $operation . 'ed for the objects.');
+    drupal_set_message('The relationship of "' . $predicate . '" = "' . $value . '" has been ' . (($operation == 'remove') ? 'removed' : 'added') . ' for the objects.');
   }
   else {
     drupal_set_message(t('There were no PID values for this export.  Please try again.'));
