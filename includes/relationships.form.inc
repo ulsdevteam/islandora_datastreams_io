@@ -227,7 +227,7 @@ function islandora_datastreams_io_relationships_form_submit(array $form, array &
         }
         elseif ($operation == 'remove') {
           if ($found) {
-            $islandora_object->relationships->remove($namespace, $predicate);
+            $islandora_object->relationships->remove($namespace, $predicate, $value);
             $updated_count++;
           }
           else {
