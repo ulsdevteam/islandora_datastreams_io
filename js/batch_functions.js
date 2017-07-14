@@ -29,6 +29,9 @@
         if (i == undefined) {
             i = $('input[name=pids_fetch_method]:checked', '#islandora-datastreams-io-relationships-form').val();
         } 
+        if (i == undefined) {
+            i = $('input[name=pids_fetch_method]:checked', '#islandora-datastreams-io-transform-form').val();
+        } 
         hideall_but(i);
     });
   

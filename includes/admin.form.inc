@@ -29,6 +29,7 @@ function islandora_datastreams_io_admin_form() {
           'file of object datastreams.</p>' .
           '<p>' . l('Import','islandora/datastreams_io/import'). ' - upload ZIP of object datastreams.</p>' .
           '<p>' . l('Relationships','islandora/datastreams_io/relationships'). ' - add / remove a relationship to a set of objects.</p>' .
+          '<p>' . l('XSLT Transform','islandora/datastreams_io/transform'). ' - run an xslt transform on datastreams for a set of objects.  You can self transform, create a copy of a datastream, or create derived datastreams this way.</p>' .
           '<blockquote><p>This module provides a convenient web ' .
           'wrapper for several of the drush functions provided by islandora_datastream_crud.</p>' .
           '<ul><li>' . implode('</li><li>', $commands) . '</li></ul></blockquote>';

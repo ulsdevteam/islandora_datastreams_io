@@ -24,14 +24,6 @@ function islandora_datastreams_io_menu() {
       'access arguments' => array(ISLANDORA_DATASTREAMS_IO),
       'file' => 'includes/admin.form.inc',
     ),
-    'islandora/datastreams_io/relationships' => array(
-      'title' => t('Object Relationships'),
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('islandora_datastreams_io_relationships_form'),
-      'type' => MENU_CALLBACK,
-      'file' => 'includes/relationships.form.inc',
-      'access arguments' => array(ISLANDORA_DATASTREAMS_IO_EXPORT),
-    ),
     'islandora/datastreams_io/export' => array(
       'title' => t('Export Datastreams'),
       'page callback' => 'drupal_get_form',
@@ -55,6 +47,22 @@ function islandora_datastreams_io_menu() {
       'type' => MENU_CALLBACK,
       'file' => 'includes/import.form.inc',
       'access arguments' => array(ISLANDORA_DATASTREAMS_IO_IMPORT),
+    ),
+    'islandora/datastreams_io/relationships' => array(
+      'title' => t('Object Relationships'),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('islandora_datastreams_io_relationships_form'),
+      'type' => MENU_CALLBACK,
+      'file' => 'includes/relationships.form.inc',
+      'access arguments' => array(ISLANDORA_DATASTREAMS_IO_EXPORT),
+    ),
+    'islandora/datastreams_io/transform' => array(
+      'title' => t('Transform Datastreams'),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('islandora_datastreams_io_transform_form'),
+      'type' => MENU_CALLBACK,
+      'file' => 'includes/transform.form.inc',
+      'access arguments' => array(ISLANDORA_DATASTREAMS_IO_EXPORT),
     ),
   );
 }
@@ -90,7 +98,8 @@ function islandora_datastreams_io_preprocess_page(&$vars) {
   if (is_array($item)) {
     if ($item['path'] == 'islandora/datastreams_io/export/batch/%' ||
         $item['path'] == 'islandora/datastreams_io/export' ||
-        $item['path'] == 'islandora/datastreams_io/relationships') {
+        $item['path'] == 'islandora/datastreams_io/relationships' ||
+        $item['path'] == 'islandora/datastreams_io/transform') {
       $path = drupal_get_path('module', 'islandora_datastreams_io');
       drupal_add_js($path . '/js/batch_functions.js');
     }

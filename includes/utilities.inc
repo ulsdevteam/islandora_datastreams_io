@@ -38,12 +38,7 @@ function islandora_datastreams_io_dump_temp_dir($full_extract_path) {
     if(is_file($file))
       unlink($file);
   }
-  if (PHP_OS === 'Windows') {
-    exec(sprintf("rd /s /q %s", escapeshellarg($full_extract_path)));
-  }
-  else {
-    exec(sprintf("rm -rf %s", escapeshellarg($full_extract_path)));
-  }
+  rmdir($full_extract_path);
 }
 
 function islandora_datastreams_deleteDirectory($dir) {
@@ -157,6 +152,49 @@ function islandora_datastreams_io_get_datastreams($pid = '') {
   catch (Exception $e) {
   }
   return $results;
+}
+
+/**
+ * Helper function that will take the datastreams that are returned by the function
+ * islandora_datastreams_io_get_datastreams -- and inspect them to see whether or not
+ * the datastreams are a "text/xml" mimetype.  This is needed to present the user with
+ * a set of datastreams that can have a transform run against them.
+ *
+ * @param array $datastreams
+ * @param type $pid
+ * @return array
+ */
+function islandora_datastreams_io_textxml_datastreams($datastreams, $pid = '') {
+  $query_processor = new IslandoraSolrQueryProcessor();
+  $keep_dsids = array();
+  $url = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr'));
+  $solr = new Apache_Solr_Service($url['host'], $url['port'], $url['path'] . '/');
+  $solr->setCreateDocuments(FALSE);
+
+  // check the datastream fedora_datastream_latest_OBJ_MIMETYPE_ms: has values that are "text/xml"
+  foreach ($datastreams as $dsid => $dsid_desc) {
+    $mimetype_field = 'fedora_datastream_latest_' .$dsid . '_MIMETYPE_ms';
+    if ($pid) {
+      $query_processor->solrQuery = 'PID:' . str_replace(array("/", ":", "-", "+"), array("\/", "\:", "\-", "\+"), $pid) . ' AND ' . $mimetype_field . ':text\/xml';
+    } else {
+      $query_processor->solrQuery = $mimetype_field . ':text\/xml' ;
+    }
+    $query_processor->solrStart = 0;
+    $query_processor->solrLimit = 1;
+    $query_processor->solrParams = array('');
+
+    $results = array();
+    try {
+      $search_results = $solr->search($query_processor->solrQuery, $query_processor->solrStart, $query_processor->solrLimit, $query_processor->solrParams, 'GET');
+      $tmp = json_decode($search_results->getRawResponse(), TRUE);
+      if ($tmp['response']['numFound'] > 0) {
+        $keep_dsids[$dsid] = $dsid . ' (' . $tmp['response']['numFound'] . ')';
+      }
+    }
+    catch (Exception $e) {
+    }
+  }
+  return $keep_dsids;
 }
 
 function islandora_datastreams_io_get_solr_options($solr_query, $key_field, $value_field, $sort_field = '') {
