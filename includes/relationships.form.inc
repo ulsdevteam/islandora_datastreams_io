@@ -130,7 +130,6 @@ function islandora_datastreams_io_relationships_form(array $form, array &$form_s
                 'namespace value of "' . FEDORA_RELS_EXT_URI . '", but for the isMemberOfSite relationship ' .
                 'the namespace value must be "http://digital.library.pitt.edu/ontology/relations#".'),
         '#default_value' => FEDORA_RELS_EXT_URI,
-        '#required' => TRUE,
       ),
       'predicate' => array(
         '#type' => 'textfield',
@@ -142,8 +141,8 @@ function islandora_datastreams_io_relationships_form(array $form, array &$form_s
       'value' => array(
         '#type' => 'textfield',
         '#title' => t('Value'),
-        '#description' => t('This value can be empty for the purpose ' .
-                'of setting an empty value - which is <b>not the same as removing the relationship</b>.'),
+        '#description' => t('When the `value` is a fedora object, the prefix "info:fedora/" should not be provided.  This value ' . 
+                'can be empty for the purpose of setting an empty value - which is <b>not the same as removing the relationship.</b>.'),
         '#default_value' => '',
       ),
     ),
@@ -198,6 +197,7 @@ function islandora_datastreams_io_relationships_form_submit(array $form, array &
       $pids = islandora_datastreams_io_get_pids_model($model);
       break;
   }
+
   if ($pids) {
     $bad_pids = $relationship_skipped = array();
     $updated_count = 0;
@@ -227,7 +227,7 @@ function islandora_datastreams_io_relationships_form_submit(array $form, array &
         }
         elseif ($operation == 'remove') {
           if ($found) {
-            $islandora_object->relationships->remove($namespace, $predicate);
+            $islandora_object->relationships->remove($namespace, $predicate, $value);
             $updated_count++;
           }
           else {
