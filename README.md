@@ -1,13 +1,51 @@
 Islandora Datastreams Input/Output & Object Relationships
 =============
-This module is mostlly just a web-ui wrapper for the islandora_datastream_crud module, but also offers a method for adding or removing particular relationships for a set of islandora objects.
+This module started out as a web-ui wrapper for the islandora_datastream_crud module, but also offers a method for adding or removing particular relationships for a set of islandora objects.  Additional functionality has been added to do more than simply import / export datastreams.  The module now supports adding / removing relationships as well as xsl transforms.
 
 Since this module shells out to the drush commands from islandora_datastream_crud be sure to have the latest version of that module installed.
 
 **NOTE:** The module processes these updates in a loop that is determined by the list of PID values.  If there are more than a hundred objects to process, expect that it will take at least a minute to process the.
 
-### Installing
-There are no options to configure for this module.  Once this module is installed, users can be configured to have permission to Import / Export datastreams using the "Use the datastreams import and export tool" `ISLANDORA_DATASTREAMS_IO` permission.  The export form is located /islandora/datastreams_io/export and the import form is located /islandora/datastreams_io/import.
+## Requirements
+
+This module requires the following modules/libraries:
+
+* [Islandora](https://github.com/islandora/islandora)
+* [Tuque](https://github.com/islandora/tuque)
+* [Islandora Datastream CRUD](https://github.com/mjordan/islandora_datastream_crud)
+* [Islandora Solr Search](https://github.com/islandora/islandora_solr_search) (optionally)
+
+## Installing
+There are no options to configure for this module.  Once this module is installed, users can be configured to have permission to Import / Export datastreams using the "Use the datastreams import and export tool" `ISLANDORA_DATASTREAMS_IO` permission.  
+
+# Operating modes
+1. Export Datastreams as a ZIP file `/islandora/datastreams_io/export`
+2. Import ZIP file containing Datastreams `/islandora/datastreams_io/import`
+3. Add/Remove relationships for objects `/islandora/datastreams_io/relationships`
+4. Modify or Copy datastream optionally using an xslt transformation `/islandora/datastreams_io/transform`
+
+
+## Export Datastreams as a ZIP file (Output)
+Select the specific datastream and define a list of objects (see **Fetch Methods** below), and download a zip file that contains files corresponding to the objects' datastream that was selected.
+
+*If the files are intended to be Imported back into the system, **DO NOT CHANGE the filenames**.*
+
+## Import ZIP file containing Datastreams (Input)
+Given the ZIP file from the **Exporting Datastreams** step, the files can be manipulated by a third-party program and then zipped back up to import back into the system.  Simply navigate to the import page at and upload the zip file.  The form will inspect the ZIP file to determine the objects and specific datastream identifier (DSID) and prompt the user whether or not to import the files that are in the ZIP file.  
+
+## Add/Remove relationships for objects
+This feature allows a specific relationship to either be added or removed from a set of objects.  In order to use this, several parameters need to be provided.  These values should be familiar to developers because they correspond to two thirds of the triples that set the relationship to the object.  The other value stores the namespace related to the relationship ontology.  After this process runs, the status of the relationship updates are displayed on the screen.  The user should test that their relationships exist as they intended.
+
+In order to make the relationship, the **predicate**, **namespace**, and **value** must be provided to make the triples relationship for the object (for each PID value provided to the set).
+
+For example, the "isMemberOfSite" relationship ontology is related to the namespace of "http://digital.library.pitt.edu/ontology/relations#".
+
+The relationship is skipped when it exists already in cases where it is being added, or if it does not exist in cases where it is being removed.
+
+## Modify or Copy datastream optionally using an xslt transformation
+This method will allow a datastream to be transformed using an XSLT transform file.  This will only work on datastreams that are text/xml.  Also, the XSLT transform must be valid.
+
+Additionally, a datastream could be copied to a new  datastream identifier without any transform.  We needed to copy a large number of OBJ datastreams to be PDF datastreams.  In order to do this, we simply selected the PID values (using "List of PID values" for the Select Objects mode), selected the OBJ datastream as the source to transform, skipped the transform option, and set the destination datastream to PDF. 
 
 ### Using from other modules
 The PID values can be passed from other modules by calling the islandora_datastreams_io_pids_to_export_form function that is provided in the main module code (see **Fetch Methods** below for the possible fetch constants).  To use this from anywhere, simply add the two lines:
@@ -18,11 +56,6 @@ The PID values can be passed from other modules by calling the islandora_datastr
 ```
 This function will redirect to the export form and pre-load based on the `$pids` and the `$pids_fetch_method` values.
 If calling the form this way and the pids_fetch_method is set to `ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS` "List of PIDS", the PIDS field will be made read-only.
-
-## Exporting Datastreams (Output)
-Select the specific datastream and define a list of objects (see **Fetch Methods** below), and download a zip file that contains files corresponding to the objects' datastream that was selected.
-
-*If the files are intended to be Imported back into the system, **DO NOT CHANGE the filenames**.*
 
 ### Datastream selection
 The select box is populated with the names of all datastreams that are in use for the current installation.  The value in parenthesis beside the datastream identifier (DSID) is the number of objects that have that datastream.
@@ -36,22 +69,10 @@ The following constands are defined:
 
 ### Adaptive options
 
-This module can extend the options based on what is installed.  In other words, if 
-islandora_solr is installed, provide the option to import / export using a Solr query.
-
-## Importing Datastreams (Input)
-Given the ZIP file from the **Exporting Datastreams** step, the files can be manipulated by a third-party program and then zipped back up to import back into the system.  Simply navigate to the import page at and upload the zip file.  The form will inspect the ZIP file to determine the objects and specific datastream identifier (DSID) and prompt the user whether or not to import the files that are in the ZIP file.  
-
-## Adding / Removing Relationships
-This feature allows a specific relationship to either be added or removed from a set of objects.  In order to use this, several parameters need to be provided.  These values should be familiar to developers because they correspond to two thirds of the triples that set the relationship to the object.  The other value stores the namespace related to the relationship ontology.  After this process runs, the status of the relationship updates are displayed on the screen.  The user should test that their relationships exist as they intended.
-
-In order to make the relationship, the **predicate**, **namespace**, and **value** must be provided to make the triples relationship for the object (for each PID value provided to the set).
-
-For example, the "isMemberOfSite" relationship ontology is related to the namespace of "http://digital.library.pitt.edu/ontology/relations#".
-
-The relationship is skipped when it exists already in cases where it is being added, or if it does not exist in cases where it is being removed.
+This module can extend the options based on what is installed.  In other words, if islandora_solr is installed, provide the option to import / export using a Solr query.
 
 **IMPORTANT:** Do not change the filenames because the system needs the filename in order to know which object and datastream to replace.
+
 
 ## Author / License
 
