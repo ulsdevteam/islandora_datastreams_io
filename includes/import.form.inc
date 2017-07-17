@@ -27,6 +27,10 @@ function islandora_datastreams_io_import_pickfile($form, &$form_state) {
           'A set of objects can be defined by a Solr query, by collection membership, by content ' .
           'model, or by a list of PID values.') . '</p>';
 
+  // Since this is used to clean up the temp file, and the second and third step 
+  // could potentially overwrite this value, make an empty value here - and simply
+  // check the value before setting in step 2.
+  $_SESSION['archive_file'] = '';
   // Prepare a couple variables for use with file upload options:
   $upload_size = min((int) ini_get('post_max_size'), (int) ini_get('upload_max_filesize'));
   $extensions = array('zip');
@@ -70,6 +74,9 @@ function islandora_datastreams_io_review_import_file(array $form, array &$form_s
     }
   }
   $tmp_name = file_directory_temp() . '/datastream_io_archive_' . date('His_hms');
+  if (isset($_SESSION['archive_file']) && $_SESSION['archive_file'] == '') {
+    $_SESSION['archive_file'] = $tmp_name;
+  }
   if ($uploaded_file_name && move_uploaded_file($uploaded_file_name, $tmp_name)) {
     $uploaded_file_name = $tmp_name;
   } else {
@@ -191,9 +198,7 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
       foreach ($files as $file) {
         $ds_fileparts = islandora_datastreams_io_ds_file_parts($file);
         if (isset($ds_fileparts['pid']) && isset($ds_fileparts['namespace']) && isset($ds_fileparts['dsid'])) {
-          // output the values from $ds_parts - need to strip the ".xml" from the pid
-          $pid = str_replace(array("_" . $ds_fileparts['dsid'], ".xml"), "", $ds_fileparts['pid']);
-          $files_markup .= 'PID = ' . l($pid, '/islandora/object/' . $pid) . ' DSID = ' . $ds_fileparts['dsid'] . '<br>';
+          $files_markup .= 'PID = ' . $ds_fileparts['pid'] . ' DSID = ' . $ds_fileparts['dsid'] . '<br>';
         }
         $file_count++;
         $dsid = (!$dsid && isset($ds_fileparts['dsid'])) ? $ds_fileparts['dsid'] : '';
@@ -218,6 +223,9 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
           $markup .= '<h3>' . $dsid . ' Datastreams Pushed: ' . number_format($file_count) . '</h3><pre>' . $files_markup . '</pre>';
         }
         islandora_datastreams_io_dump_temp_dir($full_extract_path);
+        if (isset($_SESSION['archive_file']) && $_SESSION['archive_file']) {
+          @unlink($_SESSION['archive_file']);
+        }
       }
     }
     else {
