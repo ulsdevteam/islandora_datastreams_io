@@ -177,7 +177,8 @@ function islandora_datastreams_io_textxml_datastreams($datastreams, $pid = '') {
     if ($pid) {
       $query_processor->solrQuery = 'PID:' . str_replace(array("/", ":", "-", "+"), array("\/", "\:", "\-", "\+"), $pid) . ' AND ' . $mimetype_field . ':text\/xml';
     } else {
-      $query_processor->solrQuery = $mimetype_field . ':text\/xml' ;
+      // Allow "text/xml" or "application/xml" here
+      $query_processor->solrQuery = $mimetype_field . ':*\/xml' ;
     }
     $query_processor->solrStart = 0;
     $query_processor->solrLimit = 1;
