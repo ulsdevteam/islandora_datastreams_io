@@ -166,7 +166,7 @@ function islandora_datastreams_io_transform_form(array $form, array &$form_state
 
     'submit' => array(
       '#type' => 'submit',
-      '#value' => t('Update Relationships'),
+      '#value' => t('Update'),
     ),
   );
 
