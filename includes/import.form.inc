@@ -1,5 +1,9 @@
 <?php
 
+// TODO: add an option to create the datastream if it does not exist for the
+// referenced objects.  This would be helpful for adding new datastreams to
+// existing objects such as TRANSCRIPT for manuscript pages.
+
 function islandora_datastreams_io_import_form(array $form, array &$form_state) {
   module_load_include('inc', 'islandora_datastreams_io', 'includes/utilities');
 
