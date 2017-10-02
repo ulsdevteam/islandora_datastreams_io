@@ -1,5 +1,9 @@
 <?php
 
+// TODO: add an option to create the datastream if it does not exist for the
+// referenced objects.  This would be helpful for adding new datastreams to
+// existing objects such as TRANSCRIPT for manuscript pages.
+
 function islandora_datastreams_io_import_form(array $form, array &$form_state) {
   module_load_include('inc', 'islandora_datastreams_io', 'includes/utilities');
 
@@ -208,9 +212,17 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
         islandora_datastreams_io_dump_temp_dir($full_extract_path);
       }
       else {
+        // Determine mimetype
+        $datastreams_mimetype = islandora_datastreams_io_mimetype_of_file($file);
+        
+        // If datastream label is empty, use this value, else the previous label is used.
+        $datastreams_label = 'Imported ' . $dsid;
+
         $this_domain = 'http://' . $_SERVER['HTTP_HOST'];
         $drush_command = 'drush islandora_datastream_crud_push_datastreams -u ' . $user->uid .
                          ' --datastreams_source_directory=' . $full_extract_path .
+                         ' --datastreams_mimetype ' . $datastreams_mimetype .
+                         ' --datastreams_label "' . $datastreams_label . '" ' . 
                          ' -y ' .
                          ' --uri=' . $this_domain;
 
