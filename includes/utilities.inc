@@ -177,8 +177,7 @@ function islandora_datastreams_io_textxml_datastreams($datastreams, $pid = '') {
     if ($pid) {
       $query_processor->solrQuery = 'PID:' . str_replace(array("/", ":", "-", "+"), array("\/", "\:", "\-", "\+"), $pid) . ' AND ' . $mimetype_field . ':text\/xml';
     } else {
-      // Allow "text/xml" or "application/xml" here
-      $query_processor->solrQuery = $mimetype_field . ':*\/xml' ;
+      $query_processor->solrQuery = $mimetype_field . ':text\/xml' ;
     }
     $query_processor->solrStart = 0;
     $query_processor->solrLimit = 1;
@@ -224,4 +223,32 @@ function islandora_datastreams_io_get_solr_options($solr_query, $key_field, $val
   catch (Exception $e) {
   }
   return $results;
+}
+
+/**
+ * This will return the mimetype for a given filename.
+ *
+ * @param string $file
+ *   A filename.
+ * @return string
+ *   The mimetype that corresponds to the $file provided.
+ */
+function islandora_datastreams_io_mimetype_of_file($file) {
+  require_once DRUPAL_ROOT . "/includes/file.mimetypes.inc";
+  $mimetype_mapping = file_mimetype_mapping();
+  $file_pathinfo = pathinfo($file);
+  $fallback_mimetype = 'text/xml';
+  if (isset($file_pathinfo['extension'])) {
+    $lowercase_extension = strtolower($file_pathinfo['extension']);
+    $mimetype_index = isset($mimetype_mapping['extensions'][$lowercase_extension]) ? $mimetype_mapping['extensions'][$lowercase_extension] : FALSE;
+    if (!($mimetype_index === FALSE)) {
+      return $mimetype_mapping['mimetypes'][$mimetype_index];
+    }
+    else {
+      return $fallback_mimetype;
+    }
+  }
+  else {
+    return $fallback_mimetype;
+  }
 }
