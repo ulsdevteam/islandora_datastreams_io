@@ -22,6 +22,8 @@ function islandora_datastreams_io_ds_file_parts($filename) {
 
     @list($namespace, $pid) = explode("_", $filename, 2);
     @list($dsid, $ext) = explode(".", $dsid_ext);
+
+    $pid = str_replace("_" . $dsid . "." . $ext, "", $pid);
     return array('namespace' => $namespace, 'pid' => $namespace . ':' . $pid, 'dsid' => $dsid, 'extension' => $ext);
   }
   else {
