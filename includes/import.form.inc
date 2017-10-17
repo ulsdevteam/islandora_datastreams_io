@@ -214,15 +214,14 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
       else {
         // Determine mimetype
         $datastreams_mimetype = islandora_datastreams_io_mimetype_of_file($file);
-        
         // If datastream label is empty, use this value, else the previous label is used.
         $datastreams_label = 'Imported ' . $dsid;
 
         $this_domain = 'http://' . $_SERVER['HTTP_HOST'];
         $drush_command = 'drush islandora_datastream_crud_push_datastreams -u ' . $user->uid .
                          ' --datastreams_source_directory=' . $full_extract_path .
-                         ' --datastreams_mimetype ' . $datastreams_mimetype .
-                         ' --datastreams_label "' . $datastreams_label . '" ' . 
+                         ' --datastreams_mimetype="' . $datastreams_mimetype . '" ' .
+                         ' --datastreams_label="' . $datastreams_label . '" ' . 
                          ' -y ' .
                          ' --uri=' . $this_domain;
 
@@ -235,6 +234,7 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
           $markup .= '<h3>' . $dsid . ' Datastreams Pushed: ' . number_format($file_count) . '</h3><pre>' . $files_markup . '</pre>';
         }
         islandora_datastreams_io_dump_temp_dir($full_extract_path);
+
         if (isset($_SESSION['archive_file']) && $_SESSION['archive_file']) {
           @unlink($_SESSION['archive_file']);
         }
