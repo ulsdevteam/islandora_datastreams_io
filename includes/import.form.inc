@@ -181,6 +181,7 @@ function islandora_datastreams_io_move_to_previous_stage($form, &$form_state) {
 function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filename, $do_push) {
   global $user;
   module_load_include('inc', 'islandora_datastreams_io', 'includes/utilities');
+  module_load_include('inc', 'islandora', 'includes/utilities');
 
   $markup = '';
   $zip = new ZipArchive;
@@ -202,9 +203,14 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
       foreach ($files as $file) {
         $ds_fileparts = islandora_datastreams_io_ds_file_parts($file);
         if (isset($ds_fileparts['pid']) && isset($ds_fileparts['namespace']) && isset($ds_fileparts['dsid'])) {
-          $files_markup .= 'PID = ' . $ds_fileparts['pid'] . ' DSID = ' . $ds_fileparts['dsid'] . '<br>';
+          if (!islandora_namespace_accessible($ds_fileparts['pid'])) {
+            drupal_set_message('PID ' . $ds_fileparts['pid'] . ' is restricted and will be skipped.');
+            @unlink($file);
+          } else {
+            $files_markup .= 'PID = ' . $ds_fileparts['pid'] . ' DSID = ' . $ds_fileparts['dsid'] . '<br>';
+            $file_count++;
+          }
         }
-        $file_count++;
         $dsid = (!$dsid && isset($ds_fileparts['dsid'])) ? $ds_fileparts['dsid'] : '';
       }
       if (!$do_push) {

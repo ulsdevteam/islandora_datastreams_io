@@ -8,7 +8,9 @@ function islandora_datastreams_io_get_exported_files($dir) {
   $cdir = scandir($dir);
   foreach ($cdir as $key => $value) {
     if (!in_array($value,array(".",".."))) {
-      $files[] = $value;
+      if (($value[0] <> '.') && ($value <> '__MACOSX')) {
+        $files[] = $value;
+      }
     }
   }
   return $files;
@@ -253,4 +255,27 @@ function islandora_datastreams_io_mimetype_of_file($file) {
   else {
     return $fallback_mimetype;
   }
+}
+
+/**
+ * Will return the PID values that are namespace accessible.
+ *
+ * @param type $pids
+ * @return string
+ *   PID values that are namespace accessible for the islandora site.
+ */
+function islandora_datastreams_io_pids_namespace_accessible($pids) {
+  module_load_include('inc', 'islandora', 'includes/utilities');
+  $inspect_pids = explode("\n", $pids);
+  $return_pids = array();
+  foreach ($inspect_pidssudo  as $pid) {
+    $pid = trim($pid);
+    if (islandora_namespace_accessible($pid)) {
+      $return_pids[] = $pid;
+    }
+    else {
+      drupal_set_message('PID ' . $pid . ' is restricted and will be skipped.');
+    }
+  }
+  return implode("\n", $return_pids);
 }

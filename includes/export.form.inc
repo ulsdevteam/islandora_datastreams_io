@@ -178,6 +178,7 @@ function islandora_datastreams_io_export_form_submit(array $form, array &$form_s
       break;
   }
   if ($pids) {
+    $pids = islandora_datastreams_io_pids_namespace_accessible($pids);
     // This process may take more time to complete.
     set_time_limit(0);
     $export_path = 'datastream_io_datastreams_' . date('His_hms');
