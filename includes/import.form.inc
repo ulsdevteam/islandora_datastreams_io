@@ -192,9 +192,7 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
     $zip->extractTo($full_extract_path);
     $zip->close();
 
-    // unlink($filename);
-
-    $file_count = 0;
+    $file_count = $files_to_import = 0;
     $markup .= '<h3>ZIP extraction ok.</h3>';
     $files = islandora_datastreams_io_get_exported_files($full_extract_path);
     if (count($files) > 0) {
@@ -205,16 +203,20 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
         if (isset($ds_fileparts['pid']) && isset($ds_fileparts['namespace']) && isset($ds_fileparts['dsid'])) {
           if (!islandora_namespace_accessible($ds_fileparts['pid'])) {
             drupal_set_message('PID ' . $ds_fileparts['pid'] . ' is restricted and will be skipped.');
-            @unlink($file);
+            @unlink($full_extract_path . '/' . $file);
           } else {
             $files_markup .= 'PID = ' . $ds_fileparts['pid'] . ' DSID = ' . $ds_fileparts['dsid'] . '<br>';
-            $file_count++;
+            $files_to_import++;
           }
+          $file_count++;
         }
         $dsid = (!$dsid && isset($ds_fileparts['dsid'])) ? $ds_fileparts['dsid'] : '';
       }
       if (!$do_push) {
-        $markup .= '<h3>ZIP archive contains ' . number_format($file_count) . ' '. $dsid . ' Datastream/s</h3><pre>' . $files_markup . '</pre>';
+        $markup .= '<h3>ZIP archive contains ' . number_format($file_count) . ' ' . $dsid . ' Datastream/s' .
+                ($files_to_import ? ' (with ' . number_format($file_count - $files_to_import) . 
+                    ' filtered out by namespace restrictions, leaving ' . number_format($files_to_import) . ' to be imported)' : ' - none will be imported') .
+                '</h3><pre>' . $files_markup . '</pre>';
         islandora_datastreams_io_dump_temp_dir($full_extract_path);
       }
       else {
@@ -237,7 +239,7 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
           drupal_set_message('There was an error calling the drush command : ' . $drush_command);
         }
         else {
-          $markup .= '<h3>' . $dsid . ' Datastreams Pushed: ' . number_format($file_count) . '</h3><pre>' . $files_markup . '</pre>';
+          $markup .= '<h3>' . $dsid . ' Datastreams Pushed: ' . number_format($files_to_import) . '</h3><pre>' . $files_markup . '</pre>';
         }
         islandora_datastreams_io_dump_temp_dir($full_extract_path);
 
