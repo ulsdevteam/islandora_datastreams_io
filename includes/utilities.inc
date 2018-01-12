@@ -268,7 +268,7 @@ function islandora_datastreams_io_pids_namespace_accessible($pids) {
   module_load_include('inc', 'islandora', 'includes/utilities');
   $inspect_pids = explode("\n", $pids);
   $return_pids = array();
-  foreach ($inspect_pidssudo  as $pid) {
+  foreach ($inspect_pids as $pid) {
     $pid = trim($pid);
     if (islandora_namespace_accessible($pid)) {
       $return_pids[] = $pid;
