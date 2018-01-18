@@ -30,11 +30,35 @@ function islandora_datastreams_io_admin_form() {
           '<p>' . l('Import','islandora/datastreams_io/import'). ' - upload ZIP of object datastreams.</p>' .
           '<p>' . l('Relationships','islandora/datastreams_io/relationships'). ' - add / remove a relationship to a set of objects.</p>' .
           '<p>' . l('XSLT Transform','islandora/datastreams_io/transform'). ' - run an xslt transform on datastreams for a set of objects.  You can self transform, create a copy of a datastream, or create derived datastreams this way.</p>' .
+          '<p>' . l('Update Object label from MODS titleInfo/title','islandora/datastreams_io/update_label'). ' - update object label value from MODS for specific objects.</p>' .
+          '<p>' . l('Purge Datastreams','islandora/datastreams_io/delete_datastreams'). ' - delete specific datastreams from objects.</p>' .
+          '<p>' . l('Generate Datastream Derivatives','islandora/datastreams_io/generate_derivatives'). ' - generate derivatives for sepecific datastreams on specific objects.</p>' .
           '<blockquote><p>This module provides a convenient web ' .
           'wrapper for several of the drush functions provided by islandora_datastream_crud.</p>' .
           '<ul><li>' . implode('</li><li>', $commands) . '</li></ul></blockquote>';
 
+  if (module_exists('xml_form_builder')) {
+    module_load_include('inc', 'xml_form_builder', 'includes/associations');
+    $transforms = xml_form_builder_get_transforms($associations);
+    $transforms_k_v = array();
+    // Why does this seem to be using the value for the keys?
+    foreach ($transforms as $k => $v) {
+      $transforms_k_v[$v] = $k;
+    }
+    $mods_to_dc_desc = 'The xslt transform to convert MODS to DC. Leave blank if any resultant MODS should not generate DC.';
+  }
+  else {
+    $transforms['No Transform'] = 'No Transform';
+    $mods_to_dc_desc = 'The islandora_xml_forms module is not installed.  Install it to be able to use the "mods_to_dc.xsl" transforms that are configured there.';
+  }
+
   $form = array(
+    'mods_to_dc_transform' => array(
+      '#type' => 'select',
+      '#options' => $transforms_k_v,
+      '#title' => 'MODS to DC XSL Transform',
+      '#description' => $mods_to_dc_desc,
+    ),
     'frame' => array(
       '#type' => 'fieldset',
       '#title' => 'About Islandora Datastreams Input/Output & Object Relationships',

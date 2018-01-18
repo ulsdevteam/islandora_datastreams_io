@@ -64,6 +64,30 @@ function islandora_datastreams_io_menu() {
       'file' => 'includes/transform.form.inc',
       'access arguments' => array(ISLANDORA_DATASTREAMS_IO_EXPORT),
     ),
+    'islandora/datastreams_io/update_label' => array(
+      'title' => t('Update Object label from MODS titleInfo/title'),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('islandora_datastreams_io_update_label_form'),
+      'type' => MENU_CALLBACK,
+      'file' => 'includes/update_label.form.inc',
+      'access arguments' => array(ISLANDORA_DATASTREAMS_IO_EXPORT),
+    ),
+    'islandora/datastreams_io/delete_datastreams' => array(
+      'title' => t('Purge Datastreams'),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('islandora_datastreams_io_purge_datastreams_form'),
+      'type' => MENU_CALLBACK,
+      'file' => 'includes/purge_datastreams.form.inc',
+      'access arguments' => array(ISLANDORA_DATASTREAMS_IO_EXPORT),
+    ),
+    'islandora/datastreams_io/generate_derivatives' => array(
+      'title' => t('Generate Datastream Derivatives'),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('islandora_datastreams_io_generate_deriviatives_form'),
+      'type' => MENU_CALLBACK,
+      'file' => 'includes/generate_derivatives.form.inc',
+      'access arguments' => array(ISLANDORA_DATASTREAMS_IO_EXPORT),
+    ),
   );
 }
 
@@ -99,7 +123,10 @@ function islandora_datastreams_io_preprocess_page(&$vars) {
     if ($item['path'] == 'islandora/datastreams_io/export/batch/%' ||
         $item['path'] == 'islandora/datastreams_io/export' ||
         $item['path'] == 'islandora/datastreams_io/relationships' ||
-        $item['path'] == 'islandora/datastreams_io/transform') {
+        $item['path'] == 'islandora/datastreams_io/transform' ||
+        $item['path'] == 'islandora/datastreams_io/update_label' ||
+        $item['path'] == 'islandora/datastreams_io/delete_datastreams' ||
+        $item['path'] == 'islandora/datastreams_io/generate_derivatives') {
       $path = drupal_get_path('module', 'islandora_datastreams_io');
       drupal_add_js($path . '/js/batch_functions.js');
     }
