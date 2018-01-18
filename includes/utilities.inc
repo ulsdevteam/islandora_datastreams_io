@@ -42,7 +42,12 @@ function islandora_datastreams_io_dump_temp_dir($full_extract_path) {
     if(is_file($file))
       unlink($file);
   }
-  rmdir($full_extract_path);
+  // since MAC adds files to any zip, a manually created ZIP from a MAC will
+  // not be empty and rmdir() would fail... this is BRUTE force removing.
+  $output = array();
+  $command = 'rm -rf ' . $full_extract_path;
+  exec($command, $output, $ret);
+  //  rmdir($full_extract_path);
 }
 
 function islandora_datastreams_deleteDirectory($dir) {
