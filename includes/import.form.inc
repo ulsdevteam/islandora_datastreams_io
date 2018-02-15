@@ -247,6 +247,11 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
           @unlink($_SESSION['archive_file']);
         }
       }
+      // If the dsid is MODS - and there is a transform to DC configured, we
+      // need to trigger this here.
+      if ($dsid == 'MODS') {
+
+      }
     }
     else {
       $markup .= 'There were no datastream files in the ZIP file.';

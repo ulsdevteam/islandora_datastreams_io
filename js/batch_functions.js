@@ -42,6 +42,18 @@
             i = $('input[name=pids_fetch_method]:checked', '#islandora-datastreams-io-update-label-form').val();
         }
         hideall_but(i);
+        $("#selected_dsid").hide();
+        $('#edit-datastream').change(function(){
+            var selected_text = $('#edit-datastream').find(":selected").text();
+            //do something
+            if (selected_text.toString().indexOf("*") > -1) {
+              $("#edit-transform").attr('disabled',true);
+            }
+            else {
+              $("#edit-transform").attr('disabled',false);
+            }
+            $('[name="selected_dsid"]').val(selected_text);
+         });			
     });
   
     function hideall_but(i) {
@@ -72,4 +84,3 @@
     };
   
 })(jQuery);
-

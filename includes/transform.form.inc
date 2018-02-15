@@ -30,8 +30,18 @@ function islandora_datastreams_io_transform_form(array $form, array &$form_state
   }
 
   $tmp_model_options = islandora_datastreams_io_get_models();
-  $datastreams = islandora_datastreams_io_get_datastreams();
-  $datastreams = islandora_datastreams_io_textxml_datastreams($datastreams);
+  $all_datastreams = islandora_datastreams_io_get_datastreams();
+  $datastreams = islandora_datastreams_io_textxml_datastreams($all_datastreams);
+
+  // This will loop through all datastreams and add an asterisk to the ones
+  // that are not part of the textxml mimetype list of datastreams.  This "*"
+  // character is used in the javascript to disable the file upload button
+  // for selecting a transform.
+  foreach ($all_datastreams as $dsid => $dsid_label_count) {
+    if (!(array_key_exists($dsid, $datastreams))) {
+      $datastreams[$dsid] = $dsid_label_count . ' *';
+    }
+  }
 
   $extensions = array('xsl','xslt');
   
@@ -46,9 +56,10 @@ function islandora_datastreams_io_transform_form(array $form, array &$form_state
     $model_options['info:fedora/' . $k] = $model;
   }
 
-  $markup_export = '<p>' . t('This will allow a specific datastream from a given set of objects to be downloaded. ' .
-          'A set of objects can be defined by a Solr query, by collection membership, by content ' .
-          'model, or by a list of PID values.') . '</p>';
+  $markup_export = '<p>' . t('This will allow a specific datastream from a ' .
+    'given set of objects to be downloaded. A set of objects can be defined ' .
+    'by a Solr query, by collection membership, by content model, or by a ' .
+    'list of PID values.') . '</p>';
 
   $form['transformsform'] = array(
     'form_description' => array('#markup' => $markup_export),
@@ -114,19 +125,25 @@ function islandora_datastreams_io_transform_form(array $form, array &$form_state
       '#type' => 'fieldset',
       '#title' => t('Datastream'),
       '#collapsible' => TRUE,
-      '#description' => t('Select which datastream to transform.  '),
+      '#description' => t('Select which datastream to transform.  Since some ' .
+          'objects may not have the selected datastream, it is possible to ' .
+          'transform fewer datastreams than the number of selected objects. ' .
+          'Transforms are only available on datastreams that have a mimetype ' .
+          'of "text/xml".'),
       '#group' => 'transformsform',
 
       'datastream' => array(
         '#type' => 'select',
-        '#description' => 'Select datastream to export.  It is possible to transform ' .
-          'fewer datastreams than objects because not all objects have all datastreams.<ul>' .
-          '<li>Transforms are only available on datastreams that have a mimetype of "text/xml".</li></ul>',
+        '#description' => '<super>*</super> <i>denotes a datastream that is NOT ' .
+          '"text/xml" and can not be transformed.</i>',
         '#title' => t('Datastream'),
         '#options' => $datastreams,
         '#default_value' => (isset($form_state['input']['datastream']) ? $form_state['input']['datastream'] : ''),
         '#size' => 7,
         '#group' => 'exportform',
+      ),
+      'selected_dsid' => array(
+        '#type' => 'hidden',
       ),
     ),
 
@@ -134,13 +151,20 @@ function islandora_datastreams_io_transform_form(array $form, array &$form_state
       '#type' => 'fieldset',
       '#title' => t('Transform'),
       '#collapsible' => TRUE,
-      '#description' => t('Select the transform to run on all matched objects.  If you want to copy the source datastream as a new datastream (without any change), do not upload a transform.  Transforms can only run on datastreams with a mimetype of "text/xml".'),
+      '#description' => t('Select the transform to run on all matched ' . 
+          'objects.  If you want to copy the source datastream as a new ' .
+          'datastream (without any change), do not upload a transform.  ' .
+          'Transforms can only run on datastreams with a mimetype of ' .
+          '"text/xml".'),
       '#group' => 'transformsform',
 
       'transform' => array(
         '#type' => 'file',
         '#title' => t('XSLT Transform'),
-        '#description' => t('Select the XSLT Transform to run against the selected datastreams.<br/>Files must be less than <strong>@size MB.</strong><br/>Allowed file types: <strong>@ext.</strong>', array('@size' => $upload_size, '@ext' => $extensions[0])),
+        '#description' => t('Select the XSLT Transform to run against the ' .
+          'selected datastreams.<br/>Files must be less than <strong>@size ' .
+          'MB.</strong><br/>Allowed file types: <strong>@ext.</strong>',
+                array('@size' => $upload_size, '@ext' => $extensions[0])),
         '#upload_location' => 'temporary://',
         '#upload_validators' => array(
           'file_validate_extensions' => $extensions,
@@ -160,7 +184,6 @@ function islandora_datastreams_io_transform_form(array $form, array &$form_state
 
       'destination_dsid' => array(
         '#type' => 'textfield',
-          
       ),
     ),
 
@@ -179,6 +202,7 @@ function islandora_datastreams_io_transform_form_submit(array $form, array &$for
 
   $pids_fetch_method = $form_state['values']['pids_fetch_method'];
   $pids = NULL;
+  $selected_dsid = $form_state['values']['selected_dsid'];
 
   // Unset the _SESSION value here.
   if (isset($_SESSION['pids_value']) && isset($_SESSION['pids_fetch_method'])) {
@@ -220,12 +244,15 @@ function islandora_datastreams_io_transform_form_submit(array $form, array &$for
     $pids_arr = explode("\r\n", $pids);
 
     $transform = '';
-    if (isset($_FILES['files']['name']['transform']) && isset($_FILES['files']['size']['transform'])) {
-      if ($_FILES['files']['type']['transform'] == 'text/xml') {
-        $transform = $_FILES['files']['tmp_name']['transform'];
-      }
-      elseif (isset($_FILES['files']['type']['transform']) && $_FILES['files']['type']['transform']) {
-        drupal_set_message('The transform file was not a "text/xml" type of file and can not be used.' . $_FILES['files']['type']['transform'], 'warning');
+    // ONLY use the $_FILE if the $selected_dsid does not contain "*"
+    if (strstr($selected_dsid, "*") == '') {
+      if (isset($_FILES['files']['name']['transform']) && isset($_FILES['files']['size']['transform'])) {
+        if ($_FILES['files']['type']['transform'] == 'text/xml') {
+          $transform = $_FILES['files']['tmp_name']['transform'];
+        }
+        elseif (isset($_FILES['files']['type']['transform']) && $_FILES['files']['type']['transform']) {
+          drupal_set_message('The transform file was not a "text/xml" type of file and can not be used.' . $_FILES['files']['type']['transform'], 'warning');
+        }
       }
     }
     $dsid = $form_state['values']['datastream'];
@@ -275,13 +302,14 @@ function islandora_datastreams_io_transform_datastream($islandora_object, $dsid,
       $new_ds_content = islandora_datastreams_io_runXslTransform(
           array(
             'xsl' => $transform_xsl,
-            'input' => implode("", file($xml_file)),
+            'input' => islandora_datastreams_io_file_get_contents($xml_file),
           )
         );
       // This file must be deleted in the process function that called this.
-      $bytes_written = file_put_contents($xml_file, $new_ds_content);
+      $bytes_written = islandora_datastreams_io_file_put_contents($xml_file, $new_ds_content);
+      drupal_set_message('bytes = ' . $bytes_written);
     } elseif ($got_datastream) {
-      $new_ds_content = implode("",file($xml_file));
+      $new_ds_content = islandora_datastreams_io_file_get_contents($xml_file);
     }
     // create the new datastream if needed
     if (!isset($islandora_object[$destination_dsid])) {

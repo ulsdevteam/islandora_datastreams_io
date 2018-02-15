@@ -30,8 +30,6 @@ function islandora_datastreams_io_update_label_form(array $form, array &$form_st
   }
 
   $tmp_model_options = islandora_datastreams_io_get_models();
-  $datastreams = islandora_datastreams_io_get_datastreams();
-  $datastreams = islandora_datastreams_io_textxml_datastreams($datastreams);
 
   $extensions = array('xsl','xslt');
   
@@ -198,10 +196,8 @@ function islandora_datastreams_io_update_label_form_submit(array $form, array &$
 function islandora_datastreams_io_update_label($islandora_object) {
   // Get the object's datastream saved to a temp file
   $object_MODS = $islandora_object['MODS']->getContent();
-  dpm($object_MODS);
   // $title
   // Pull out the titleInfo/title and compare this to the current object->label
   // $islandora_object->label = 'updated';
-    dpm('object label = "' . $islandora_object->label.'"');
   return ($got_datastream && (isset($islandora_object[$dsid])));
 }

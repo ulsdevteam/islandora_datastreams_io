@@ -157,6 +157,7 @@ function islandora_datastreams_io_get_datastreams($pid = '') {
         $results[$key] = $key . ' (' . $num . ')';
       }
     }
+    ksort($results);
   }
   catch (Exception $e) {
   }
@@ -283,4 +284,29 @@ function islandora_datastreams_io_pids_namespace_accessible($pids) {
     }
   }
   return implode("\n", $return_pids);
+}
+
+function islandora_datastreams_io_file_put_contents($filename, $data) {
+  $f = @fopen($filename, 'wb');
+  if ($f === FALSE) {
+    return false;
+  } else {
+    $bytes = fwrite($f, $data);
+    fclose($f);
+    return $bytes;
+  }
+}
+
+function islandora_datastreams_io_file_get_contents($filename) {
+  $rh = fopen($filename, 'rb');
+  if ($rh === FALSE) {
+    return false;
+  } else {
+    $out = '';
+    while (!feof($rh)) {
+      $out .= fread($rh, 1024);
+    }
+    fclose($rh);
+    return $out;
+  }
 }

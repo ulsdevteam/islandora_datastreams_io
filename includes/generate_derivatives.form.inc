@@ -275,13 +275,13 @@ function islandora_datastreams_io_transform_datastream($islandora_object, $dsid,
       $new_ds_content = islandora_datastreams_io_runXslTransform(
           array(
             'xsl' => $transform_xsl,
-            'input' => implode("", file($xml_file)),
+            'input' => islandora_datastreams_io_file_get_contents($xml_file),
           )
         );
       // This file must be deleted in the process function that called this.
-      $bytes_written = file_put_contents($xml_file, $new_ds_content);
+      $bytes_written = islandora_datastreams_io_file_put_contents($xml_file, $new_ds_content);
     } elseif ($got_datastream) {
-      $new_ds_content = implode("",file($xml_file));
+      $new_ds_content = islandora_datastreams_io_file_get_contents($xml_file);
     }
     // create the new datastream if needed
     if (!isset($islandora_object[$destination_dsid])) {

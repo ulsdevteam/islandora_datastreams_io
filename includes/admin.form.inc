@@ -16,6 +16,10 @@
  *   The Drupal form definition.
  */
 function islandora_datastreams_io_admin_form() {
+  global $user;
+
+  $has_import_access = user_access(ISLANDORA_DATASTREAMS_IO_IMPORT, $user);
+  $has_export_access = user_access(ISLANDORA_DATASTREAMS_IO_EXPORT, $user);
   module_load_include('inc', 'islandora_datastream_crud', 'islandora_datastream_crud.drush');
   $islandora_datastream_crud_drush_commands = @islandora_datastream_crud_drush_command();
   $bold_commands = array('islandora_datastream_crud_fetch_datastreams', 'islandora_datastream_crud_push_datastreams');
@@ -25,14 +29,14 @@ function islandora_datastreams_io_admin_form() {
     $commands[$command] = $bold_wrap_pre . $command . $bold_wrap_post . (isset($command_params['description']) ? '<br>' . $command_params['description'] : '');
   }
 
-  $about_islandora_datastreams_io_markup = '<p>' . l('Export','islandora/datastreams_io/export'). ' - export a ZIP ' .
+  $about_islandora_datastreams_io_markup = '<p>' . l('Export','admin/islandora/datastreams_io/export'). ' - export a ZIP ' .
           'file of object datastreams.</p>' .
-          '<p>' . l('Import','islandora/datastreams_io/import'). ' - upload ZIP of object datastreams.</p>' .
-          '<p>' . l('Relationships','islandora/datastreams_io/relationships'). ' - add / remove a relationship to a set of objects.</p>' .
-          '<p>' . l('XSLT Transform','islandora/datastreams_io/transform'). ' - run an xslt transform on datastreams for a set of objects.  You can self transform, create a copy of a datastream, or create derived datastreams this way.</p>' .
-          '<p>' . l('Update Object label from MODS titleInfo/title','islandora/datastreams_io/update_label'). ' - update object label value from MODS for specific objects.</p>' .
-          '<p>' . l('Purge Datastreams','islandora/datastreams_io/delete_datastreams'). ' - delete specific datastreams from objects.</p>' .
-          '<p>' . l('Generate Datastream Derivatives','islandora/datastreams_io/generate_derivatives'). ' - generate derivatives for sepecific datastreams on specific objects.</p>' .
+          '<p>' . l('Import','admin/islandora/datastreams_io/import'). ' - upload ZIP of object datastreams.</p>' .
+          '<p>' . l('Relationships','admin/islandora/datastreams_io/relationships'). ' - add / remove a relationship to a set of objects.</p>' .
+          '<p>' . l('XSLT Transform','admin/islandora/datastreams_io/transform'). ' - run an xslt transform on datastreams for a set of objects.  You can self transform, create a copy of a datastream, or create derived datastreams this way.</p>' .
+          '<p>' . l('Update Object label from MODS titleInfo/title','admin/islandora/datastreams_io/update_label'). ' - update object label value from MODS for specific objects.</p>' .
+          '<p>' . l('Purge Datastreams','admin/islandora/datastreams_io/delete_datastreams'). ' - delete specific datastreams from objects.</p>' .
+          '<p>' . l('Generate Datastream Derivatives','admin/islandora/datastreams_io/generate_derivatives'). ' - generate derivatives for sepecific datastreams on specific objects.</p>' .
           '<blockquote><p>This module provides a convenient web ' .
           'wrapper for several of the drush functions provided by islandora_datastream_crud.</p>' .
           '<ul><li>' . implode('</li><li>', $commands) . '</li></ul></blockquote>';
@@ -56,6 +60,7 @@ function islandora_datastreams_io_admin_form() {
     'mods_to_dc_transform' => array(
       '#type' => 'select',
       '#options' => $transforms_k_v,
+      '#default_value' => variable_get('islandora_datastreams_io_mods_to_dc_transform', 'No Transform'),
       '#title' => 'MODS to DC XSL Transform',
       '#description' => $mods_to_dc_desc,
     ),
@@ -87,10 +92,11 @@ function islandora_datastreams_io_admin_form_submit(array $form, array &$form_st
   $id = $form_state['triggering_element']['#id'];
   switch ($id) {
     case 'edit-submit':
+      variable_set('islandora_datastreams_io_mods_to_dc_transform', $form_state['values']['mods_to_dc_transform']);
       drupal_goto('/admin/islandora');
       break;
-
     case 'edit-reset':
+      variable_del('islandora_datastreams_io_mods_to_dc_transform');
       break;
   }
 }

@@ -19,13 +19,15 @@ function islandora_datastreams_io_menu() {
     'admin/islandora/datastreams_io' => array(
       'title' => 'Islandora Datastreams Input/Output & Object Relationships',
       'description' => 'Settings for the Islandora Datastreams Input/Output & Object Relationships module.',
+      'type' => MENU_NORMAL_ITEM,
       'page callback' => 'drupal_get_form',
       'page arguments' => array('islandora_datastreams_io_admin_form'),
       'access arguments' => array(ISLANDORA_DATASTREAMS_IO),
       'file' => 'includes/admin.form.inc',
     ),
-    'islandora/datastreams_io/export' => array(
+    'admin/islandora/datastreams_io/export' => array(
       'title' => t('Export Datastreams'),
+      'type' => MENU_NORMAL_ITEM,
       'page callback' => 'drupal_get_form',
       'page arguments' => array('islandora_datastreams_io_export_form'),
       'type' => MENU_CALLBACK,
@@ -33,58 +35,59 @@ function islandora_datastreams_io_menu() {
       'access arguments' => array(ISLANDORA_DATASTREAMS_IO_EXPORT),
     ),
     // ZIP file download handler
-    'islandora/datastreams_io/download_export/%' => array(
+    'admin/islandora/datastreams_io/download_export/%' => array(
       'title' => t('Download export'),
+      'type' => MENU_NORMAL_ITEM,
       'page callback' => 'islandora_datastreams_download_export',
       'page arguments' => array(3),
       'file' => 'includes/download_export.inc',
       'access arguments' => array(ISLANDORA_DATASTREAMS_IO_EXPORT),
     ),
-    'islandora/datastreams_io/import' => array(
+    'admin/islandora/datastreams_io/import' => array(
       'title' => t('Import Datastreams'),
+      'type' => MENU_NORMAL_ITEM,
       'page callback' => 'drupal_get_form',
       'page arguments' => array('islandora_datastreams_io_import_form'),
-      'type' => MENU_CALLBACK,
       'file' => 'includes/import.form.inc',
       'access arguments' => array(ISLANDORA_DATASTREAMS_IO_IMPORT),
     ),
-    'islandora/datastreams_io/relationships' => array(
+    'admin/islandora/datastreams_io/relationships' => array(
       'title' => t('Object Relationships'),
+      'type' => MENU_NORMAL_ITEM,
       'page callback' => 'drupal_get_form',
       'page arguments' => array('islandora_datastreams_io_relationships_form'),
-      'type' => MENU_CALLBACK,
       'file' => 'includes/relationships.form.inc',
-      'access arguments' => array(ISLANDORA_DATASTREAMS_IO_EXPORT),
+      'access arguments' => array(ISLANDORA_DATASTREAMS_IO_IMPORT),
     ),
-    'islandora/datastreams_io/transform' => array(
+    'admin/islandora/datastreams_io/transform' => array(
       'title' => t('Transform Datastreams'),
+      'type' => MENU_NORMAL_ITEM,
       'page callback' => 'drupal_get_form',
       'page arguments' => array('islandora_datastreams_io_transform_form'),
-      'type' => MENU_CALLBACK,
       'file' => 'includes/transform.form.inc',
-      'access arguments' => array(ISLANDORA_DATASTREAMS_IO_EXPORT),
+      'access arguments' => array(ISLANDORA_DATASTREAMS_IO_IMPORT),
     ),
-    'islandora/datastreams_io/update_label' => array(
+    'admin/islandora/datastreams_io/update_label' => array(
       'title' => t('Update Object label from MODS titleInfo/title'),
+      'type' => MENU_NORMAL_ITEM,
       'page callback' => 'drupal_get_form',
       'page arguments' => array('islandora_datastreams_io_update_label_form'),
-      'type' => MENU_CALLBACK,
       'file' => 'includes/update_label.form.inc',
       'access arguments' => array(ISLANDORA_DATASTREAMS_IO_EXPORT),
     ),
-    'islandora/datastreams_io/delete_datastreams' => array(
+    'admin/islandora/datastreams_io/delete_datastreams' => array(
       'title' => t('Purge Datastreams'),
+      'type' => MENU_NORMAL_ITEM,
       'page callback' => 'drupal_get_form',
       'page arguments' => array('islandora_datastreams_io_purge_datastreams_form'),
-      'type' => MENU_CALLBACK,
       'file' => 'includes/purge_datastreams.form.inc',
       'access arguments' => array(ISLANDORA_DATASTREAMS_IO_EXPORT),
     ),
-    'islandora/datastreams_io/generate_derivatives' => array(
+    'admin/islandora/datastreams_io/generate_derivatives' => array(
       'title' => t('Generate Datastream Derivatives'),
+      'type' => MENU_NORMAL_ITEM,
       'page callback' => 'drupal_get_form',
       'page arguments' => array('islandora_datastreams_io_generate_deriviatives_form'),
-      'type' => MENU_CALLBACK,
       'file' => 'includes/generate_derivatives.form.inc',
       'access arguments' => array(ISLANDORA_DATASTREAMS_IO_EXPORT),
     ),
@@ -120,13 +123,13 @@ function islandora_datastreams_io_permission() {
 function islandora_datastreams_io_preprocess_page(&$vars) {
   $item = menu_get_item();
   if (is_array($item)) {
-    if ($item['path'] == 'islandora/datastreams_io/export/batch/%' ||
-        $item['path'] == 'islandora/datastreams_io/export' ||
-        $item['path'] == 'islandora/datastreams_io/relationships' ||
-        $item['path'] == 'islandora/datastreams_io/transform' ||
-        $item['path'] == 'islandora/datastreams_io/update_label' ||
-        $item['path'] == 'islandora/datastreams_io/delete_datastreams' ||
-        $item['path'] == 'islandora/datastreams_io/generate_derivatives') {
+    if ($item['path'] == 'admin/islandora/datastreams_io/export/batch/%' ||
+        $item['path'] == 'admin/islandora/datastreams_io/export' ||
+        $item['path'] == 'admin/islandora/datastreams_io/relationships' ||
+        $item['path'] == 'admin/islandora/datastreams_io/transform' ||
+        $item['path'] == 'admin/islandora/datastreams_io/update_label' ||
+        $item['path'] == 'admin/islandora/datastreams_io/delete_datastreams' ||
+        $item['path'] == 'admin/islandora/datastreams_io/generate_derivatives') {
       $path = drupal_get_path('module', 'islandora_datastreams_io');
       drupal_add_js($path . '/js/batch_functions.js');
     }
@@ -146,5 +149,5 @@ function islandora_datastreams_io_preprocess_page(&$vars) {
 function islandora_datastreams_io_pids_to_export_form($pids_value, $pids_fetch_method) {
   $_SESSION['pids_value'] = json_encode($pids_value);
   $_SESSION['pids_fetch_method'] = $pids_fetch_method;
-  drupal_goto('/islandora/datastreams_io/export');
+  drupal_goto('/admin/islandora/datastreams_io/export');
 }

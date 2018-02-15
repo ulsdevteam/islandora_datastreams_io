@@ -221,7 +221,7 @@ function islandora_datastreams_io_export_form_submit(array $form, array &$form_s
 
     $base64_zip_name = base64_encode($zip_name);
     $zip_size = filesize($zip_name);
-    $download_link = l('Download ZIP export', 'islandora/datastreams_io/download_export/' . $base64_zip_name);
+    $download_link = l('Download ZIP export', 'admin/islandora/datastreams_io/download_export/' . $base64_zip_name);
 
     drupal_set_message('The export of datastreams is complete.  ' . $download_link . ' ' . islandora_datastreams_io_human_filesize($zip_size));
 
