@@ -31,12 +31,12 @@ function islandora_datastreams_io_admin_form() {
 
   $about_islandora_datastreams_io_markup = '<p>' . l('Export','admin/islandora/datastreams_io/export'). ' - export a ZIP ' .
           'file of object datastreams.</p>' .
-          ($has_import_access ? '<p>' . l('Import','islandora/datastreams_io/import'). ' - upload ZIP of object datastreams.</p>' : '') .
-          ($has_import_access ? '<p>' . l('Relationships','islandora/datastreams_io/relationships'). ' - add / remove a relationship to a set of objects.</p>' : '') .
-          ($has_import_access ? '<p>' . l('XSLT Transform','islandora/datastreams_io/transform'). ' - run an xslt transform on datastreams for a set of objects.  You can self transform, create a copy of a datastream, or create derived datastreams this way.</p>' : '') .
-          '<p>' . l('Update Object label from MODS titleInfo/title','islandora/datastreams_io/update_label'). ' - update object label value from MODS for specific objects.</p>' .
-          '<p>' . l('Purge Datastreams','islandora/datastreams_io/delete_datastreams'). ' - delete specific datastreams from objects.</p>' .
-          '<p>' . l('Generate Datastream Derivatives','islandora/datastreams_io/generate_derivatives'). ' - generate derivatives for sepecific datastreams on specific objects.</p>' .
+          ($has_import_access ? '<p>' . l('Import','admin/islandora/datastreams_io/import'). ' - upload ZIP of object datastreams.</p>' : '') .
+          ($has_import_access ? '<p>' . l('Relationships','admin/islandora/datastreams_io/relationships'). ' - add / remove a relationship to a set of objects.</p>' : '') .
+          ($has_import_access ? '<p>' . l('XSLT Transform','admin/islandora/datastreams_io/transform'). ' - run an xslt transform on datastreams for a set of objects.  You can self transform, create a copy of a datastream, or create derived datastreams this way.</p>' : '') .
+          '<p>' . l('Update Object label from MODS titleInfo/title','admin/islandora/datastreams_io/update_label'). ' - update object label value from MODS for specific objects.</p>' .
+          '<p>' . l('Purge Datastreams','admin/islandora/datastreams_io/delete_datastreams'). ' - delete specific datastreams from objects.</p>' .
+          '<p>' . l('Generate Datastream Derivatives','admin/islandora/datastreams_io/generate_derivatives'). ' - generate derivatives for sepecific datastreams on specific objects.</p>' .
           '<blockquote><p>This module provides a convenient web ' .
           'wrapper for several of the drush functions provided by islandora_datastream_crud.</p>' .
           '<ul><li>' . implode('</li><li>', $commands) . '</li></ul></blockquote>';
