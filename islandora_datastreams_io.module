@@ -75,22 +75,6 @@ function islandora_datastreams_io_menu() {
       'file' => 'includes/update_label.form.inc',
       'access arguments' => array(ISLANDORA_DATASTREAMS_IO_EXPORT),
     ),
-    'admin/islandora/datastreams_io/delete_datastreams' => array(
-      'title' => t('Purge Datastreams'),
-      'type' => MENU_NORMAL_ITEM,
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('islandora_datastreams_io_purge_datastreams_form'),
-      'file' => 'includes/purge_datastreams.form.inc',
-      'access arguments' => array(ISLANDORA_DATASTREAMS_IO_EXPORT),
-    ),
-    'admin/islandora/datastreams_io/generate_derivatives' => array(
-      'title' => t('Generate Datastream Derivatives'),
-      'type' => MENU_NORMAL_ITEM,
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('islandora_datastreams_io_generate_deriviatives_form'),
-      'file' => 'includes/generate_derivatives.form.inc',
-      'access arguments' => array(ISLANDORA_DATASTREAMS_IO_EXPORT),
-    ),
   );
 }
 
@@ -118,7 +102,7 @@ function islandora_datastreams_io_permission() {
 /**
  * Implements hook_presprocess_theme().
  *
- * This code will remove the sidebar and must check to see whether or not the path is on a user page.
+ * This code will add the javascript if on a datastreams_io page.
  */
 function islandora_datastreams_io_preprocess_page(&$vars) {
   $item = menu_get_item();
@@ -128,8 +112,7 @@ function islandora_datastreams_io_preprocess_page(&$vars) {
         $item['path'] == 'admin/islandora/datastreams_io/relationships' ||
         $item['path'] == 'admin/islandora/datastreams_io/transform' ||
         $item['path'] == 'admin/islandora/datastreams_io/update_label' ||
-        $item['path'] == 'admin/islandora/datastreams_io/delete_datastreams' ||
-        $item['path'] == 'admin/islandora/datastreams_io/generate_derivatives') {
+        $item['path'] == 'admin/islandora/datastreams_io/delete_datastreams') {
       $path = drupal_get_path('module', 'islandora_datastreams_io');
       drupal_add_js($path . '/js/batch_functions.js');
     }

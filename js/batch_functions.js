@@ -33,12 +33,6 @@
             i = $('input[name=pids_fetch_method]:checked', '#islandora-datastreams-io-transform-form').val();
         }
         if (i == undefined) {
-            i = $('input[name=pids_fetch_method]:checked', '#islandora-datastreams-io-purge-datastreams-form').val();
-        }
-        if (i == undefined) {
-            i = $('input[name=pids_fetch_method]:checked', '#islandora-datastreams-io-generate-deriviatives-form').val();
-        }
-        if (i == undefined) {
             i = $('input[name=pids_fetch_method]:checked', '#islandora-datastreams-io-update-label-form').val();
         }
         hideall_but(i);
