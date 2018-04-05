@@ -47,7 +47,7 @@ function islandora_datastreams_io_dump_temp_dir($full_extract_path) {
 }
 
 function islandora_datastreams_io_deleteDirectory($dir) {
-  if ($dir <> '.') {
+  if ($dir && $dir <> '.') {
     system('rm -rf ' . escapeshellarg($dir), $retval);
     return $retval == 0; // UNIX commands return zero on success
   }
@@ -309,11 +309,100 @@ function islandora_datastreams_io_file_get_contents($filename) {
   }
 }
 
-function islandora_datastreams_io_schema_success($file) {
-  // Check to see if the mimetype of the file is text/xml... if so, test the
-  // file's underlying structure against the schema.
-  $datastreams_mimetype = islandora_datastreams_io_mimetype_of_file($file);
-dpm($datastreams_mimetype);
-  dpm('SCHEMA TEST on file: ' . $file);
-  return FALSE;
+function islandora_datastreams_io_get_mods_schema_versions() {
+  return array(
+    'https://www.loc.gov/standards/mods/v3/mods-3-7.xsd' => 'MODS 3.7',
+    'https://www.loc.gov/standards/mods/v3/mods-3-6.xsd' => 'MODS 3.6',
+    'https://www.loc.gov/standards/mods/v3/mods-3-5.xsd' => 'MODS 3.5',
+    'https://www.loc.gov/standards/mods/v3/mods-3-4.xsd' => 'MODS 3.4',
+    'https://www.loc.gov/standards/mods/v3/mods-3-3.xsd' => 'MODS 3.3',
+    'https://www.loc.gov/standards/mods/v3/mods-3-2.xsd' => 'MODS 3.2',
+    'https://www.loc.gov/standards/mods/v3/mods-3-1.xsd' => 'MODS 3.1',
+    'https://www.loc.gov/standards/mods/v3/mods-3-0.xsd' => 'MODS 3.0'
+  );
+}
+
+function islandora_datastreams_io_schema_success($file, $islandora_object, $dsid, $schema_uri) {
+  // First, check the local temp directory to see if the MODS schema has been
+  // stored locally.  If not, get it and store it there for quicker access
+  // for subsequent schema tests.
+  if (strtoupper($dsid) == 'MODS') {
+    $path_info = pathinfo($schema_uri);
+    $local_schema_filename = "temporary://" . $path_info['basename'];
+    if (!file_exists($local_schema_filename)) {
+      $schema_contents = file_get_contents($schema_uri);
+      file_put_contents($local_schema_filename, $schema_contents);
+    }
+
+    // Get the datatream from the islandora_object -- and perform the schema check.
+    if (isset($islandora_object['MODS'])) {
+      $mods_datastream = islandora_datastream_load('MODS', $islandora_object);
+      try {
+        $got_mods = $mods_datastream->getContent("temporary://mods");
+        if ($got_mods) {
+          $mods_content = file_get_contents("temporary://mods");
+          $doc0 = new DOMDocument();
+          return !(!@$doc0->load($mods_content) || (!@$doc0->schemaValidate($local_schema_filename)));
+        }
+      }
+      catch (Exception $e) {
+         die('EXCEPTION in _save_solr_search_session : called from ' . $_SERVER['SERVER_NAME'] .
+      ' - ' . $_SERVER['REQUEST_URI'] . '<pre>
+      ' . print_r($e, true));
+      }
+    }
+  }
+  return TRUE;
+}
+
+function islandora_datastreams_io_get_fetch_methods($pid_values) {
+  $fetch_methods = array(
+      ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS => 'List of PID values' .
+        ((count($pid_values) > 0) ? ' (' . count($pid_values) . ' PID value' .
+        ((count($pid_values) == 1) ? '' : 's') . ' supplied)' : ''));
+  if (module_exists('islandora_solr')) {
+    $fetch_methods[ISLANDORA_DATASTREAMS_IO_FETCH_SOLR] = 'Solr query';
+    $fetch_methods[ISLANDORA_DATASTREAMS_IO_FETCH_COLLECTION] = 'Collection';
+    $fetch_methods[ISLANDORA_DATASTREAMS_IO_FETCH_MODEL] = 'Model';
+  }
+  return $fetch_methods;
+}
+
+function islandora_datastreams_io_pids_report_markup($form_values) {
+  $temp_pids_filename = "temporary://selected_pids";
+  if (file_exists($temp_pids_filename)) {
+    switch ($form_values['pids_fetch_method']) {
+      case ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS:
+        $fetch_message = 'PIDS provided by user';
+        break;
+      case ISLANDORA_DATASTREAMS_IO_FETCH_SOLR:
+        $solr_query = $form_values['solr_query'];
+        $fetch_message = 'Lookup PIDS for Solr query: "' . $solr_query . '"';
+        break;
+      case ISLANDORA_DATASTREAMS_IO_FETCH_COLLECTION:
+        $collection = $form_values['collection'];
+        $fetch_message = 'Lookup PIDS for Collection: "' . $collection . '"';
+        break;
+      case ISLANDORA_DATASTREAMS_IO_FETCH_MODEL:
+        $model = $form_values['model'];
+        $fetch_message = 'Lookup PIDS for fedora Model: "' . $model . '"';
+        break;
+    }
+    $temp_pids_file = file_get_contents($temp_pids_filename);
+    $temp_pids_file_as_arr = explode("\n", $temp_pids_file);
+
+    foreach ($temp_pids_file_as_arr as $key => $pid) {
+      $temp_pids_file_as_arr[$key] = l($pid, 'islandora/object/' . $pid,
+          array('attributes'=>array('target' => '_blank')));
+    }
+    unlink($temp_pids_filename);
+    return '<div class="datastreams_io_report"><h3>Selected PID values (' .
+      $fetch_message . ')</h3>Represents ' . number_format(count($temp_pids_file_as_arr)).
+      ' Islandora objects<pre>' . implode("<br>", $temp_pids_file_as_arr) . '</pre></div>';
+  }
+  else {
+    return '<div class="datastreams_io_report"><h3>Selected PID values (' .
+      $fetch_message . ')</h3>It appears that the form was not submitted or that no PID values ' .
+        'resulted.  "' . $temp_pids_filename . '" did not exist.</div>';
+  }
 }

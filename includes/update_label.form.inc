@@ -20,17 +20,7 @@ function islandora_datastreams_io_update_label_form(array $form, array &$form_st
 
   $default_pids_value = implode('
 ', $pid_values);
-  $fetch_methods = array(
-      ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS => 'List of PID values' .
-        ((count($pid_values) > 0) ? ' (' . count($pid_values) . ' PID value' .
-        ((count($pid_values) == 1) ? '' : 's') . ' supplied)' : ''),
-      ISLANDORA_DATASTREAMS_IO_FETCH_SOLR => 'Solr query',
-      ISLANDORA_DATASTREAMS_IO_FETCH_COLLECTION => 'Collection',
-      ISLANDORA_DATASTREAMS_IO_FETCH_MODEL => 'Model');
-  if (!module_exists('islandora_solr')) {
-    unset($fetch_methods[0]);
-  }
-
+  $fetch_methods = islandora_datastreams_io_get_fetch_methods($pid_values);
   $tmp_model_options = islandora_datastreams_io_get_models();
 
   $extensions = array('xsl','xslt');
@@ -177,7 +167,7 @@ function islandora_datastreams_io_update_label_form_submit(array $form, array &$
       }
     }
     if (count($skipped) > 0) {
-      drupal_set_message('At least one of datastream for the objects could not be transformed.  These are: \'' . implode("', '", $relationship_skipped) . '\'', 'info');
+      drupal_set_message('At least one of datastream for the objects could not be updated.  These are: \'' . implode("', '", $relationship_skipped) . '\'', 'info');
     }
     if (count($bad_pids) > 0) {
       drupal_set_message('At least one of the PID values were not able to be loaded as an object.  These are: \'' . implode("', '", $bad_pids) . '\'', 'warning');

@@ -6,8 +6,8 @@ define('ISLANDORA_DATASTREAMS_IO_EXPORT', 'datastreams output');
 define('ISLANDORA_DATASTREAMS_IO_IMPORT', 'datastreams input');
 
 // pids_fetch_methods:
-define('ISLANDORA_DATASTREAMS_IO_FETCH_SOLR', 0);
-define('ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS', 1);
+define('ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS', 0);
+define('ISLANDORA_DATASTREAMS_IO_FETCH_SOLR', 1);
 define('ISLANDORA_DATASTREAMS_IO_FETCH_COLLECTION', 2);
 define('ISLANDORA_DATASTREAMS_IO_FETCH_MODEL', 3);
 
@@ -39,7 +39,7 @@ function islandora_datastreams_io_menu() {
       'title' => t('Download export'),
       'type' => MENU_NORMAL_ITEM,
       'page callback' => 'islandora_datastreams_io_download_export',
-      'page arguments' => array(3),
+      'page arguments' => array(4),
       'file' => 'includes/download_export.inc',
       'access arguments' => array(ISLANDORA_DATASTREAMS_IO_EXPORT),
     ),
@@ -107,14 +107,18 @@ function islandora_datastreams_io_permission() {
 function islandora_datastreams_io_preprocess_page(&$vars) {
   $item = menu_get_item();
   if (is_array($item)) {
+    $path = drupal_get_path('module', 'islandora_datastreams_io');
     if ($item['path'] == 'admin/islandora/datastreams_io/export/batch/%' ||
         $item['path'] == 'admin/islandora/datastreams_io/export' ||
         $item['path'] == 'admin/islandora/datastreams_io/relationships' ||
         $item['path'] == 'admin/islandora/datastreams_io/transform' ||
         $item['path'] == 'admin/islandora/datastreams_io/update_label' ||
         $item['path'] == 'admin/islandora/datastreams_io/delete_datastreams') {
-      $path = drupal_get_path('module', 'islandora_datastreams_io');
       drupal_add_js($path . '/js/batch_functions.js');
+      drupal_add_css($path . '/css/datastreams_io.css');
+    }
+    elseif ($item['path'] == 'admin/islandora/datastreams_io') {
+      drupal_add_js($path . '/js/admin_functions.js');
     }
   }
 }

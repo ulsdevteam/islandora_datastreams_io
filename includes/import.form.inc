@@ -198,6 +198,16 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
     $zip->close();
 
     $schema_test_text_xml = variable_get('islandora_datastreams_io_schema_test_text_xml', TRUE);
+    $mods_schema_version = ($schema_test_text_xml) ?
+        variable_get('islandora_datastreams_io_mods_schema_xsd_version', 'MODS 3.7') : '';
+    if ($mods_schema_version) {
+      $mods_schema_versions = islandora_datastreams_io_get_mods_schema_versions();
+      $mods_schema_uri = array_search($mods_schema_version, $mods_schema_versions);
+    }
+    else {
+      $mods_schema_uri = '';
+    }
+
     $raw_file_in_zip_count = $files_to_import = $skipped_namespace_restriction_count = 0;
     $markup .= '<h3>ZIP extraction ok.</h3>';
     $files = islandora_datastreams_io_get_exported_files($full_extract_path);
@@ -227,16 +237,18 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
             // Check to see that this PID is an islandora_object.
             $test_islandora_object = islandora_object_load($ds_fileparts['pid']);
             if (is_object($test_islandora_object)) {
-              // If the destination DSID is text/xml, and the configuration is
+              // If the destination DSID is MODS, and the configuration is
               // set to perform a schema test on text/xml -- these could fail
               // for that reason as well.
-              if ($schema_test_text_xml && islandora_datastreams_io_schema_success($file)) {
-                $files_markup .= 'PID = ' . $ds_fileparts['pid'] .
-                    ', DSID = ' . $ds_fileparts['dsid'] . '<br>';
-                $files_to_import++;
-              }
-              else {
-                $cannot_import_reasons[$file] = $ds_fileparts['pid'] . ' failed a schema test';
+              if ($ds_fileparts['dsid'] == 'MODS') {
+                if ($schema_test_text_xml && islandora_datastreams_io_schema_success($file, $test_islandora_object, $ds_fileparts['dsid'], $mods_schema_uri)) {
+                  $files_markup .= 'PID = ' . $ds_fileparts['pid'] .
+                      ', DSID = ' . $ds_fileparts['dsid'] . '<br>';
+                  $files_to_import++;
+                }
+                else {
+                  $cannot_import_reasons[$file] = $ds_fileparts['pid'] . ' failed a schema test';
+                }
               }
             }
             else {

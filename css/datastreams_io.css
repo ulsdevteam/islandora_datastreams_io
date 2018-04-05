@@ -1,0 +1,20 @@
+.datastreams_io_report {
+    padding: 10px;
+    border: 2px solid #777;
+    box-shadow: 10px 10px 5px #ccc;
+    margin-bottom: 10px;
+    max-height: 200px;
+    overflow: auto;
+}
+
+.datastreams_io_report pre {
+    margin: 10px;
+}
+
+.good {
+    color: green;
+}
+
+.bad {
+    color: red;
+}

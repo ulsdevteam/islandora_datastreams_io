@@ -51,13 +51,13 @@
     });
   
     function hideall_but(i) {
-        if (i < 1) {
+        if (i == 1) {
             $('.form-item-solr-query').show();
             $('.form-item-list-of-pids').hide();
             $('.form-item-collection').hide();
             $('.form-item-model').hide();
         }
-        if (i == 1) {
+        if (i < 1) {
             $('.form-item-solr-query').hide();
             $('.form-item-list-of-pids').show();
             $('.form-item-collection').hide();

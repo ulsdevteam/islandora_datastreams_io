@@ -19,17 +19,7 @@ function islandora_datastreams_io_export_form(array $form, array &$form_state, $
 
   $default_pids_value = implode('
 ', $pid_values);
-  $fetch_methods = array(
-      ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS => 'List of PID values' .
-        ((count($pid_values) > 0) ? ' (' . count($pid_values) . ' PID value' .
-        ((count($pid_values) == 1) ? '' : 's') . ' supplied)' : ''),
-      ISLANDORA_DATASTREAMS_IO_FETCH_SOLR => 'Solr query',
-      ISLANDORA_DATASTREAMS_IO_FETCH_COLLECTION => 'Collection',
-      ISLANDORA_DATASTREAMS_IO_FETCH_MODEL => 'Model');
-  if (!module_exists('islandora_solr')) {
-    unset($fetch_methods[0]);
-  }
-
+  $fetch_methods = islandora_datastreams_io_get_fetch_methods($pid_values);
   $tmp_model_options = islandora_datastreams_io_get_models();
   $datastreams = islandora_datastreams_io_get_datastreams();
 
@@ -47,7 +37,10 @@ function islandora_datastreams_io_export_form(array $form, array &$form_state, $
   $markup_export = '<p>' . t('This will allow a specific datastream from a given set of objects to be downloaded. ' .
           'A set of objects can be defined by a Solr query, by collection membership, by content ' .
           'model, or by a list of PID values.') . '</p>';
-
+  if (array_key_exists('values', $form_state)) {
+    $markup_export .= islandora_datastreams_io_pids_report_markup($form_state['values']);
+  }
+  
   $form['exportform'] = array(
     'form_description' => array('#markup' => $markup_export),
     'pids' => array(
@@ -58,11 +51,11 @@ function islandora_datastreams_io_export_form(array $form, array &$form_state, $
       '#type' => 'fieldset',
       '#title' => t('Datastream'),
       '#collapsible' => TRUE,
-      '#description' => t('Select which datastream to export.  '),
+      '#description' => t('Select which datastreams to export.  '),
       '#group' => 'exportform',
       'datastream' => array(
         '#type' => 'select',
-        '#description' => 'Select datastream to export.  It is possible to ' .
+        '#description' => 'Select datastreams to export.  It is possible to ' .
           'export fewer datastreams than objects because objects are not ' .
           'guaranteed to have the selected datastream.  It may take a ' .
           'very long time to export a large number of objects or to export ' .
@@ -71,8 +64,9 @@ function islandora_datastreams_io_export_form(array $form, array &$form_state, $
         '#title' => t('Datastream'),
         '#options' => $datastreams,
         '#default_value' => (isset($form_state['input']['datastream']) ? $form_state['input']['datastream'] : ''),
+        '#multiple' => TRUE,
         '#required' => TRUE,
-        '#size' => 7,
+        '#size' => 14,
         '#group' => 'exportform',
       ),
     ),
@@ -128,6 +122,10 @@ function islandora_datastreams_io_export_form(array $form, array &$form_state, $
       '#type' => 'submit',
       '#value' => t('Export batch'),
     ),
+    'see_selected' => array(
+      '#type' => 'submit',
+      '#value' => t('See Selected Objects'),
+    ),
   );
 
   return $form;
@@ -148,16 +146,16 @@ function islandora_datastreams_io_export_form_submit(array $form, array &$form_s
 
   // Depending on the pids_fetch_method value, the PID values are derived one of 4 different ways:
   switch ($pids_fetch_method) {
-    // 0 - Solr query
+    // 0 - List of PIDS
+    case ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS:
+      $pids = $form_state['values']['list_of_pids'];
+      break;
+
+    // 1 - Solr query
     case ISLANDORA_DATASTREAMS_IO_FETCH_SOLR:
       $solr_query = $form_state['values']['solr_query'];
       drupal_set_message('Lookup PIDS for Solr query: "' . $solr_query . '"');
       $pids = islandora_datastreams_io_get_pids_solr_query($solr_query);
-      break;
-
-    // 1 - List of PIDS
-    case ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS:
-      $pids = $form_state['values']['list_of_pids'];
       break;
 
     // 2 - Collection
@@ -176,54 +174,74 @@ function islandora_datastreams_io_export_form_submit(array $form, array &$form_s
   }
   if ($pids) {
     $pids = islandora_datastreams_io_pids_namespace_accessible($pids);
-    // This process may take more time to complete.
-    set_time_limit(0);
-    $export_path = 'datastream_io_datastreams_' . date('His_hms');
-    chdir(file_directory_temp());
-    mkdir($export_path);
-    $full_export_path = file_directory_temp() . '/' . $export_path;
-    $zip_name = $full_export_path . '/file.zip';
+    if ($form_state['triggering_element']['#value'] <> 'See Selected Objects') {
+      // This process may take more time to complete.
+      set_time_limit(0);
+      $export_path = 'datastream_io_datastreams_' . date('His_hms');
+      chdir(file_directory_temp());
+      mkdir($export_path);
+      $full_export_path = file_directory_temp() . '/' . $export_path;
+      $zip_name = $full_export_path . '/file.zip';
 
-    $this_domain = 'http://' . $_SERVER['HTTP_HOST'];
+      $this_domain = 'http://' . $_SERVER['HTTP_HOST'];
+      $script_base = str_replace('/index.php', '', $_SERVER['SCRIPT_FILENAME']);
+      $SETTINGS_PATH = $script_base . '/' . conf_path(TRUE);
+      chdir($SETTINGS_PATH);
 
-    $script_base = str_replace('/index.php', '', $_SERVER['SCRIPT_FILENAME']);
-    $SETTINGS_PATH = $script_base . '/' . conf_path(TRUE);
+      $pids_file = tempnam(file_directory_temp(), 'pids_file.txt');
+      file_put_contents($pids_file, $pids);
 
-    chdir($SETTINGS_PATH);
+      foreach ($form_state['values']['datastream'] as $datastream) {
+        $drush_command = 'drush islandora_datastream_crud_fetch_datastreams -u ' . $user->uid .
+                         ' --pid_file=' . $pids_file . ' --dsid=' . $datastream .
+                         ' --datastreams_directory=' . $full_export_path .
+                         ' -y ' .
+                         ' --uri=' . $this_domain;
 
-    $pids_file = tempnam(file_directory_temp(), 'pids_file.txt');
-    file_put_contents($pids_file, $pids);
+        $output = $return_var = array();
+        exec($drush_command, $output, $return_var);
+        if ($return_var == -1 || $return_var == 255) {
+          drupal_set_message('There was an error calling the drush command : ' . $drush_command);
+        }
+      }
+      $files = islandora_datastreams_io_get_exported_files($full_export_path);
+      chdir($full_export_path);
+      $zip = new ZipArchive;
+      $zip->open($zip_name, ZipArchive::CREATE);
+      foreach ($files as $file) {
+        $zip->addFile($file);
+      }
+      $zip->close();
 
-    $datastream = $form_state['values']['datastream'];
-    $drush_command = 'drush islandora_datastream_crud_fetch_datastreams -u ' . $user->uid .
-                     ' --pid_file=' . $pids_file . ' --dsid=' . $datastream .
-                     ' --datastreams_directory=' . $full_export_path .
-                     ' -y ' .
-                     ' --uri=' . $this_domain;
+      $base64_zip_name = base64_encode($zip_name);
+      $zip_size = filesize($zip_name);
+      // The link function messes up the filename by leaving an extra %3D at
+      // the end which causes the base64_encode to create a bad filename.  Use
+      // strings to create the raw HTML for the equivalent link.
+      $download_link = '<a href="/admin/islandora/datastreams_io/download_export/' .
+          $base64_zip_name . '">Download ZIP export</a>';
 
-    $output = $return_var = array();
-    exec($drush_command, $output, $return_var);
-    if ($return_var == -1 || $return_var == 255) {
-      drupal_set_message('There was an error calling the drush command : ' . $drush_command);
+      drupal_set_message('The export of datastreams is complete.  ' .
+          $download_link . ' ' . islandora_datastreams_io_human_filesize($zip_size));
+
+      // Remove the temporary files
+      unlink($pids_file);
     }
-
-    $files = islandora_datastreams_io_get_exported_files($full_export_path);
-    chdir($full_export_path);
-    $zip = new ZipArchive;
-    $zip->open($zip_name, ZipArchive::CREATE);
-    foreach ($files as $file) {
-      $zip->addFile($file);
+    else {
+      $bad_pids = $good_pids = array();
+      $pids_arr = explode("\n", $pids);
+      foreach ($pids_arr as $pid) {
+        $pid = str_replace("\\r", "", trim($pid));
+        $islandora_object = islandora_object_load($pid);
+        if (is_object($islandora_object)) {
+          $good_pids[] = $pid;
+        } else {
+          // TODO: maybe display the PIDS that could not load
+        }
+      }
+      file_put_contents("temporary://selected_pids", implode("\n", $good_pids));
+      $form_state['rebuild'] = TRUE;
     }
-    $zip->close();
-
-    $base64_zip_name = base64_encode($zip_name);
-    $zip_size = filesize($zip_name);
-    $download_link = l('Download ZIP export', 'admin/islandora/datastreams_io/download_export/' . $base64_zip_name);
-
-    drupal_set_message('The export of datastreams is complete.  ' . $download_link . ' ' . islandora_datastreams_io_human_filesize($zip_size));
-
-    // Remove the temporary files
-    unlink($pids_file);
   }
   else {
     drupal_set_message(t('There were no PID values for this export.  Please try again.'));
