@@ -38,7 +38,7 @@ function islandora_datastreams_io_menu() {
     'admin/islandora/datastreams_io/download_export/%' => array(
       'title' => t('Download export'),
       'type' => MENU_NORMAL_ITEM,
-      'page callback' => 'islandora_datastreams_download_export',
+      'page callback' => 'islandora_datastreams_io_download_export',
       'page arguments' => array(3),
       'file' => 'includes/download_export.inc',
       'access arguments' => array(ISLANDORA_DATASTREAMS_IO_EXPORT),

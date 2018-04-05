@@ -20,9 +20,11 @@ function islandora_datastreams_io_transform_form(array $form, array &$form_state
 
   $default_pids_value = implode('
 ', $pid_values);
-  $fetch_methods = array(ISLANDORA_DATASTREAMS_IO_FETCH_SOLR => 'Solr query',
+  $fetch_methods = array(
       ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS => 'List of PID values' .
-        ((count($pid_values) > 0) ? ' (' . count($pid_values) . ' PID value' . ((count($pid_values) == 1) ? '' : 's') . ' supplied)' : ''),
+        ((count($pid_values) > 0) ? ' (' . count($pid_values) . ' PID value' .
+        ((count($pid_values) == 1) ? '' : 's') . ' supplied)' : ''),
+      ISLANDORA_DATASTREAMS_IO_FETCH_SOLR => 'Solr query',
       ISLANDORA_DATASTREAMS_IO_FETCH_COLLECTION => 'Collection',
       ISLANDORA_DATASTREAMS_IO_FETCH_MODEL => 'Model');
   if (!module_exists('islandora_solr')) {
@@ -39,7 +41,7 @@ function islandora_datastreams_io_transform_form(array $form, array &$form_state
   // for selecting a transform.
   foreach ($all_datastreams as $dsid => $dsid_label_count) {
     if (!(array_key_exists($dsid, $datastreams))) {
-      $datastreams[$dsid] = $dsid_label_count . ' *';
+      unset($datastreams[$dsid]);
     }
   }
 
@@ -63,24 +65,30 @@ function islandora_datastreams_io_transform_form(array $form, array &$form_state
 
   $form['transformsform'] = array(
     'form_description' => array('#markup' => $markup_export),
-
     'pids' => array(
       '#type' => 'hidden',
       '#default_value' => $default_pids_value,
     ),
-
     'objectsformset' => array(
       '#type' => 'fieldset',
       '#title' => t('Select objects'),
       '#collapsible' => TRUE,
       '#description' => t('For the export, select the method to select the objects.'),
-
       'pids_fetch_method' => array(
         '#type' => 'radios',
         '#options' => $fetch_methods,
-        '#default_value' => (isset($form_state['input']['pids_fetch_method']) ? $form_state['input']['pids_fetch_method'] : ''),
+        '#default_value' => ((isset($form_state['input']['pids_fetch_method']) &&
+          ($form_state['input']['pids_fetch_method']) <> '') ?
+          $form_state['input']['pids_fetch_method'] : ''),
       ),
-
+      'list_of_pids' => array(
+        '#type' => 'textarea',
+        '#title' => t('PID values'),
+        '#attributes' => $pids_attributes,
+        '#description' => t('PID values, one on each line.'),
+        '#default_value' => $default_pids_value,
+        '#group' => 'transformsform',
+      ),
       'solr_query' => array(
         '#type' => 'textarea',
         '#title' => t('Solr query'),
@@ -90,16 +98,6 @@ function islandora_datastreams_io_transform_form(array $form, array &$form_state
           ' do not try to use filter queries "fq" or field lists "fl" or any special Solr options for this query.',
         '#group' => 'transformsform',
       ),
-
-      'list_of_pids' => array(
-        '#type' => 'textarea',
-        '#title' => t('PID values'),
-        '#attributes' => $pids_attributes,
-        '#description' => t('PID values, one on each line.'),
-        '#default_value' => $default_pids_value,
-        '#group' => 'transformsform',
-      ),
-
       'collection' => array(
         '#type' => 'select',
         '#description' => 'Select collection',
@@ -109,7 +107,6 @@ function islandora_datastreams_io_transform_form(array $form, array &$form_state
         '#size' => 10,
         '#group' => 'transformsform',
       ),
-
       'model' => array(
         '#type' => 'select',
         '#description' => 'Select model',
@@ -120,7 +117,6 @@ function islandora_datastreams_io_transform_form(array $form, array &$form_state
         '#group' => 'transformsform',
       ),
     ),
-      
     'datastreamformset' => array(
       '#type' => 'fieldset',
       '#title' => t('Datastream'),
@@ -131,22 +127,19 @@ function islandora_datastreams_io_transform_form(array $form, array &$form_state
           'Transforms are only available on datastreams that have a mimetype ' .
           'of "text/xml".'),
       '#group' => 'transformsform',
-
       'datastream' => array(
         '#type' => 'select',
-        '#description' => '<super>*</super> <i>denotes a datastream that is NOT ' .
-          '"text/xml" and can not be transformed.</i>',
         '#title' => t('Datastream'),
         '#options' => $datastreams,
         '#default_value' => (isset($form_state['input']['datastream']) ? $form_state['input']['datastream'] : ''),
         '#size' => 7,
+        '#required' => TRUE,
         '#group' => 'exportform',
       ),
       'selected_dsid' => array(
         '#type' => 'hidden',
       ),
     ),
-
     'transformformset' => array(
       '#type' => 'fieldset',
       '#title' => t('Transform'),
@@ -157,7 +150,6 @@ function islandora_datastreams_io_transform_form(array $form, array &$form_state
           'Transforms can only run on datastreams with a mimetype of ' .
           '"text/xml".'),
       '#group' => 'transformsform',
-
       'transform' => array(
         '#type' => 'file',
         '#title' => t('XSLT Transform'),
@@ -173,20 +165,19 @@ function islandora_datastreams_io_transform_form(array $form, array &$form_state
         ),
       ),
     ),
-
     'selftransformformset' => array(
       '#type' => 'fieldset',
       '#title' => t('Destination Datastream'),
       '#collapsible' => TRUE,
-      '#description' => t('If this is a self transform, the resultant transformed file will ' .
-          'be saved over the original source.'),
+      '#description' => t('If this is a self transform, the resultant ' .
+          'transformed file will be saved over the original source.  ' .
+          'Non-existant datastreams can be created by entering a new ' .
+          'datastream identifier.'),
       '#group' => 'transformsform',
-
       'destination_dsid' => array(
         '#type' => 'textfield',
       ),
     ),
-
     'submit' => array(
       '#type' => 'submit',
       '#value' => t('Update'),

@@ -1,6 +1,6 @@
 <?php
 
-function islandora_datastreams_download_export($base64_encoded_zip_name) {
+function islandora_datastreams_io_download_export($base64_encoded_zip_name) {
   module_load_include('inc', 'islandora_datastreams_io', 'includes/utilities');
   $zip_name = base64_decode($base64_encoded_zip_name);
 
@@ -17,7 +17,7 @@ function islandora_datastreams_download_export($base64_encoded_zip_name) {
 
     // If it exist, check if it's a directory
     if ($path !== false AND is_dir($path)) {
-      islandora_datastreams_deleteDirectory($path);
+      islandora_datastreams_io_deleteDirectory($path);
     }
   }
 }

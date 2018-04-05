@@ -19,9 +19,11 @@ function islandora_datastreams_io_export_form(array $form, array &$form_state, $
 
   $default_pids_value = implode('
 ', $pid_values);
-  $fetch_methods = array(ISLANDORA_DATASTREAMS_IO_FETCH_SOLR => 'Solr query',
+  $fetch_methods = array(
       ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS => 'List of PID values' .
-        ((count($pid_values) > 0) ? ' (' . count($pid_values) . ' PID value' . ((count($pid_values) == 1) ? '' : 's') . ' supplied)' : ''),
+        ((count($pid_values) > 0) ? ' (' . count($pid_values) . ' PID value' .
+        ((count($pid_values) == 1) ? '' : 's') . ' supplied)' : ''),
+      ISLANDORA_DATASTREAMS_IO_FETCH_SOLR => 'Solr query',
       ISLANDORA_DATASTREAMS_IO_FETCH_COLLECTION => 'Collection',
       ISLANDORA_DATASTREAMS_IO_FETCH_MODEL => 'Model');
   if (!module_exists('islandora_solr')) {
@@ -48,45 +50,52 @@ function islandora_datastreams_io_export_form(array $form, array &$form_state, $
 
   $form['exportform'] = array(
     'form_description' => array('#markup' => $markup_export),
-
     'pids' => array(
       '#type' => 'hidden',
       '#default_value' => $default_pids_value,
     ),
-
     'datastreamformset' => array(
       '#type' => 'fieldset',
       '#title' => t('Datastream'),
       '#collapsible' => TRUE,
       '#description' => t('Select which datastream to export.  '),
       '#group' => 'exportform',
-
       'datastream' => array(
         '#type' => 'select',
-        '#description' => 'Select datastream to export.  It is possible to export ' .
-          'fewer datastreams than objects because not all objects have all datastreams.<ul>' .
-          '<li>It may take a very long time to export a large number of objects or ' .
-          'to export larger datastreams such as OBJ, JPG, AVI, MP4, etc.</li></ul>',
+        '#description' => 'Select datastream to export.  It is possible to ' .
+          'export fewer datastreams than objects because objects are not ' .
+          'guaranteed to have the selected datastream.  It may take a ' .
+          'very long time to export a large number of objects or to export ' .
+          'larger datastreams such as OBJ, JPG, AVI, MP4, etc. so it may ' .
+          'be wise to start with batches containing fewer than 500 objects.',
         '#title' => t('Datastream'),
         '#options' => $datastreams,
         '#default_value' => (isset($form_state['input']['datastream']) ? $form_state['input']['datastream'] : ''),
+        '#required' => TRUE,
         '#size' => 7,
         '#group' => 'exportform',
       ),
     ),
-
     'objectsformset' => array(
       '#type' => 'fieldset',
       '#title' => t('Select objects'),
       '#collapsible' => TRUE,
       '#description' => t('For the export, select the method to select the objects.'),
-
       'pids_fetch_method' => array(
         '#type' => 'radios',
         '#options' => $fetch_methods,
-        '#default_value' => (isset($form_state['input']['pids_fetch_method']) ? $form_state['input']['pids_fetch_method'] : ''),
+        '#default_value' => ((isset($form_state['input']['pids_fetch_method']) &&
+          ($form_state['input']['pids_fetch_method']) <> '') ?
+          $form_state['input']['pids_fetch_method'] : ''),
       ),
-
+      'list_of_pids' => array(
+        '#type' => 'textarea',
+        '#title' => t('PID values'),
+        '#attributes' => $pids_attributes,
+        '#description' => t('PID values, one on each line.'),
+        '#default_value' => $default_pids_value,
+        '#group' => 'exportform',
+      ),
       'solr_query' => array(
         '#type' => 'textarea',
         '#title' => t('Solr query'),
@@ -96,16 +105,6 @@ function islandora_datastreams_io_export_form(array $form, array &$form_state, $
           ' do not try to use filter queries "fq" or field lists "fl" or any special Solr options for this query.',
         '#group' => 'exportform',
       ),
-
-      'list_of_pids' => array(
-        '#type' => 'textarea',
-        '#title' => t('PID values'),
-        '#attributes' => $pids_attributes,
-        '#description' => t('PID values, one on each line.'),
-        '#default_value' => $default_pids_value,
-        '#group' => 'exportform',
-      ),
-
       'collection' => array(
         '#type' => 'select',
         '#description' => 'Select collection',
@@ -115,7 +114,6 @@ function islandora_datastreams_io_export_form(array $form, array &$form_state, $
         '#size' => 10,
         '#group' => 'exportform',
       ),
-
       'model' => array(
         '#type' => 'select',
         '#description' => 'Select model',
@@ -126,7 +124,6 @@ function islandora_datastreams_io_export_form(array $form, array &$form_state, $
         '#group' => 'exportform',
       ),
     ),
-
     'submit' => array(
       '#type' => 'submit',
       '#value' => t('Export batch'),

@@ -29,17 +29,31 @@ function islandora_datastreams_io_admin_form() {
     $commands[$command] = $bold_wrap_pre . $command . $bold_wrap_post . (isset($command_params['description']) ? '<br>' . $command_params['description'] : '');
   }
 
-  $about_islandora_datastreams_io_markup = '<p>' . l('Export','admin/islandora/datastreams_io/export'). ' - export a ZIP ' .
-          'file of object datastreams.</p>' .
-          ($has_import_access ? '<p>' . l('Import','admin/islandora/datastreams_io/import'). ' - upload ZIP of object datastreams.</p>' : '') .
-          ($has_import_access ? '<p>' . l('Relationships','admin/islandora/datastreams_io/relationships'). ' - add / remove a relationship to a set of objects.</p>' : '') .
-          ($has_import_access ? '<p>' . l('XSLT Transform','admin/islandora/datastreams_io/transform'). ' - run an xslt transform on datastreams for a set of objects.  You can self transform, create a copy of a datastream, or create derived datastreams this way.</p>' : '') .
-          '<p>' . l('Update Object label from MODS titleInfo/title','admin/islandora/datastreams_io/update_label'). ' - update object label value from MODS for specific objects.</p>' .
-          '<blockquote><p>This module provides a convenient web ' .
-          'wrapper for several of the drush functions provided by islandora_datastream_crud.</p>' .
-          '<ul><li>' . implode('</li><li>', $commands) . '</li></ul></blockquote>';
+  $about_islandora_datastreams_io_markup = '<blockquote><p>This module provides a GUI web ' .
+      'wrapper for several of the drush functions provided by ' . 
+      l('islandora_datastream_crud', 'https://github.com/SFULibrary/islandora_datastream_crud',
+          array('attributes'=>array('target' => '_blank'))) .
+      ' as well as some additional utility functions for batch processing of Islandora object datastreams.</p>' .
+      '<ul><li>' . implode('</li><li>', $commands) . '</li></ul></blockquote>';
 
+  $io_links_markup = '<p>' . l('Export','admin/islandora/datastreams_io/export'). ' - export a ZIP ' .
+      'file of object datastreams.</p>' .
+      ($has_import_access ? '<p>' . 
+          l('Import','admin/islandora/datastreams_io/import').
+          ' - upload ZIP of object datastreams.</p>' : '') .
+      ($has_import_access ? '<p>' . 
+          l('Relationships','admin/islandora/datastreams_io/relationships').
+          ' - add / remove a relationship to a set of objects.</p>' : '') .
+      ($has_import_access ? '<p>' .
+          l('XSLT Transform','admin/islandora/datastreams_io/transform').
+          ' - run an xslt transform on datastreams for a set of objects.  ' .
+          'You can self transform, create a copy of a datastream, or create ' .
+          'derived datastreams this way.</p>' : '') .
+      '<p>' . l('Update Object label from MODS titleInfo/title', 
+          'admin/islandora/datastreams_io/update_label').
+          ' - update object label value from MODS for specific objects.</p>';
   if (module_exists('xml_form_builder')) {
+    $associations = array();
     module_load_include('inc', 'xml_form_builder', 'includes/associations');
     $transforms = xml_form_builder_get_transforms($associations);
     $transforms_k_v = array();
@@ -47,34 +61,59 @@ function islandora_datastreams_io_admin_form() {
     foreach ($transforms as $k => $v) {
       $transforms_k_v[$v] = $k;
     }
-    $mods_to_dc_desc = 'The xslt transform to convert MODS to DC. Leave blank if any resultant MODS should not generate DC.';
+    $mods_to_dc_desc = 'This only applies to the <b>Import</b> and the ' .
+        '<b>XSLT Transform</b> functions when the destination datastream ' .
+        'is MODS.  The xslt transform to convert MODS to DC.  Leave blank ' .
+        'if any resultant MODS should not generate DC.';
   }
   else {
     $transforms['No Transform'] = 'No Transform';
-    $mods_to_dc_desc = 'The islandora_xml_forms module is not installed.  Install it to be able to use the "mods_to_dc.xsl" transforms that are configured there.';
+    $mods_to_dc_desc = 'The islandora_xml_forms module is not installed.  ' . 
+        'Install it to be able to use the "mods_to_dc.xsl" transforms that ' .
+        'are configured there.';
   }
 
-  $form = array(
-    'mods_to_dc_transform' => array(
+  $form['frame1'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Utility Functions'),
+      'links' => array(
+        '#type' => 'item',
+        '#markup' => $io_links_markup,
+      ),
+    );
+  $form['mods_to_dc_transform'] = array(
       '#type' => 'select',
       '#options' => $transforms_k_v,
       '#default_value' => variable_get('islandora_datastreams_io_mods_to_dc_transform', 'No Transform'),
       '#title' => 'MODS to DC XSL Transform',
       '#description' => $mods_to_dc_desc,
-    ),
-    'frame' => array(
+    );
+  $form['schema_test_text_xml'] = array(
+      '#type' => 'checkbox',
+      '#title' => 'Perform schema test on import of any text/xml files',
+      '#default_value' => variable_get('islandora_datastreams_io_schema_test_text_xml', TRUE),
+    );
+  if (module_exists('islandora_solr')) {
+    $form['solr_limit'] = array(
+      '#type' => 'textfield',
+      '#title' => 'Solr query limit',
+      '#description' => 'Use to control the maximum number of Solr records returned for "Solr query", "Collection", "Model" fetch methods.',
+      '#default_value' => variable_get('islandora_datastreams_io_solr_limit', 10000),
+    );
+  }
+  $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Save'),
+    );
+  $form['frame2'] = array(
       '#type' => 'fieldset',
       '#title' => 'About Islandora Datastreams Input/Output & Object Relationships',
       'about' => array(
         '#type' => 'item',
         '#markup' => $about_islandora_datastreams_io_markup,
       )
-    ),
-    'submit' => array(
-      '#type' => 'submit',
-      '#value' => t('Return'),
-    ),
-  );
+    );
+
   return $form;
 }
 
@@ -91,10 +130,13 @@ function islandora_datastreams_io_admin_form_submit(array $form, array &$form_st
   switch ($id) {
     case 'edit-submit':
       variable_set('islandora_datastreams_io_mods_to_dc_transform', $form_state['values']['mods_to_dc_transform']);
-      drupal_goto('/admin/islandora');
-      break;
-    case 'edit-reset':
-      variable_del('islandora_datastreams_io_mods_to_dc_transform');
+      variable_set('islandora_datastreams_io_schema_test_text_xml', $form_state['values']['schema_test_text_xml']);
+      if (!is_numeric(trim($form_state['values']['solr_limit']))) {
+        $form_state['values']['solr_limit'] = 10000;
+        drupal_set_message(t('Solr query limit value was not numeric.  The value of "10,000" has been substitued.'), 'info');
+      }
+      variable_set('islandora_datastreams_io_solr_limit', $form_state['values']['solr_limit']);
+      drupal_set_message(t('The settings have been updated!'));
       break;
   }
 }

@@ -27,9 +27,10 @@ function islandora_datastreams_io_import_form(array $form, array &$form_state) {
 }
 
 function islandora_datastreams_io_import_pickfile($form, &$form_state) {
-  $markup_import = '<p>' . t('This will allow a specific datastream from a given set of objects to be downloaded. ' .
-          'A set of objects can be defined by a Solr query, by collection membership, by content ' .
-          'model, or by a list of PID values.') . '</p>';
+  $markup_import = '<p>' . t('This will allow a specific datastream from a ' . 
+      'given set of objects to be downloaded.  A set of objects can be ' .
+      'defined by a Solr query, by collection membership, by content model, ' .
+      'or by a list of PID values.') . '</p>';
 
   // Since this is used to clean up the temp file, and the second and third step 
   // could potentially overwrite this value, make an empty value here - and simply
@@ -45,7 +46,11 @@ function islandora_datastreams_io_import_pickfile($form, &$form_state) {
     'file' => array(
       '#type' => 'file',
       '#title' => t('File'),
-      '#description' => t('Select ZIP file of datastream files.<br/>Files must be less than <strong>@size MB.</strong><br/>Allowed file types: <strong>@ext.</strong>', array('@size' => $upload_size, '@ext' => $extensions[0])),
+      '#description' => t('Select ZIP file of datastream files.<br/>Files ' . 
+          'must be less than <strong>@size MB.</strong><br/>Allowed file ' .
+          'types: <strong>@ext.</strong>', array(
+              '@size' => $upload_size,
+              '@ext' => $extensions[0])),
       '#upload_location' => 'temporary://',
       '#upload_validators' => array(
         'file_validate_extensions' => $extensions,
@@ -192,31 +197,84 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
     $zip->extractTo($full_extract_path);
     $zip->close();
 
-    $file_count = $files_to_import = 0;
+    $schema_test_text_xml = variable_get('islandora_datastreams_io_schema_test_text_xml', TRUE);
+    $raw_file_in_zip_count = $files_to_import = $skipped_namespace_restriction_count = 0;
     $markup .= '<h3>ZIP extraction ok.</h3>';
     $files = islandora_datastreams_io_get_exported_files($full_extract_path);
     if (count($files) > 0) {
-      $files_markup = '';
+      $cannot_import_markup = $files_markup = '';
       $dsid = '';
+      $extra_files_in_zip = $file_count = $missing_islandora_objects = array();
+      foreach ($files as $file) {
+        $ds_fileparts = islandora_datastreams_io_ds_file_parts($file);
+        // Initialize the $file_count array if the file looks like it has an
+        // Islandora object PID and DSID.
+        if (array_key_exists('dsid', $ds_fileparts) && !array_key_exists($ds_fileparts['dsid'], $file_count)) {
+          $file_count[$ds_fileparts['dsid']] = 0;
+        }
+      }
       foreach ($files as $file) {
         $ds_fileparts = islandora_datastreams_io_ds_file_parts($file);
         if (isset($ds_fileparts['pid']) && isset($ds_fileparts['namespace']) && isset($ds_fileparts['dsid'])) {
           if (!islandora_namespace_accessible($ds_fileparts['pid'])) {
             drupal_set_message('PID ' . $ds_fileparts['pid'] . ' is restricted and will be skipped.');
             @unlink($full_extract_path . '/' . $file);
+            $skipped_namespace_restriction_count++;
+            $files_markup .= '<span class="bad">PID = ' . $ds_fileparts['pid'] . 
+                ', DSID = ' . $ds_fileparts['dsid'] . '</span> <i>skipped because of namespace restrictions</i><br>';
+            $cannot_import_reasons[$file] = $ds_fileparts['pid'] . ' is skipped because of namespace restrictions';
           } else {
-            $files_markup .= 'PID = ' . $ds_fileparts['pid'] . ' DSID = ' . $ds_fileparts['dsid'] . '<br>';
-            $files_to_import++;
+            // Check to see that this PID is an islandora_object.
+            $test_islandora_object = islandora_object_load($ds_fileparts['pid']);
+            if (is_object($test_islandora_object)) {
+              // If the destination DSID is text/xml, and the configuration is
+              // set to perform a schema test on text/xml -- these could fail
+              // for that reason as well.
+              if ($schema_test_text_xml && islandora_datastreams_io_schema_success($file)) {
+                $files_markup .= 'PID = ' . $ds_fileparts['pid'] .
+                    ', DSID = ' . $ds_fileparts['dsid'] . '<br>';
+                $files_to_import++;
+              }
+              else {
+                $cannot_import_reasons[$file] = $ds_fileparts['pid'] . ' failed a schema test';
+              }
+            }
+            else {
+              $missing_islandora_objects[] = $ds_fileparts['pid'];
+              $cannot_import_reasons[$file] = $ds_fileparts['pid'] . ' is not an Islandora object';
+              $files_markup .= '<span class="bad">PID = ' . $ds_fileparts['pid'] . 
+                  ', DSID = ' . $ds_fileparts['dsid'] . '</span> <i>skipped because Islandora object does not exist</i><br>';
+            }
           }
-          $file_count++;
+          $file_count[$ds_fileparts['dsid']]++;
         }
+        else {
+          $extra_files_in_zip[] = $file;
+          $cannot_import_reasons[$file] = 'does not appear to represent an Islandora object datastream file';
+        }
+        $raw_file_in_zip_count++;
         $dsid = (!$dsid && isset($ds_fileparts['dsid'])) ? $ds_fileparts['dsid'] : '';
       }
       if (!$do_push) {
-        $markup .= '<h3>ZIP archive contains ' . number_format($file_count) . ' ' . $dsid . ' Datastream/s' .
-                ($files_to_import ? ' (with ' . number_format($file_count - $files_to_import) . 
-                    ' filtered out by namespace restrictions, leaving ' . number_format($files_to_import) . ' to be imported)' : ' - none will be imported') .
-                '</h3><pre>' . $files_markup . '</pre>';
+        $markup .= '<h3>ZIP archive contains ' . number_format($raw_file_in_zip_count) . ' files</h3>';
+        if (count($cannot_import_reasons) > 0) {
+          $cannot_import_markup = '<ul>';
+          foreach ($cannot_import_reasons as $file => $reason) {
+            $cannot_import_markup .= '<li>' . $reason . ' for file "' . $file . '"</li>';
+          }
+          $cannot_import_markup .= '</ul>';
+          
+        }
+        if ($files_to_import) {
+          $markup .= '<p>Clicking the [Finish] button would import ' . number_format($files_to_import) . ' Datastream/s.' .
+            (($files_to_import <> $raw_file_in_zip_count) ? $cannot_import_markup :
+              number_format($files_to_import) . ' to be imported)') .
+            '</p><pre>' . $files_markup . '</pre>';
+        }
+        else {
+          $markup .= 'There are no datastreams to import.' . $cannot_import_markup;
+        }
+
         islandora_datastreams_io_dump_temp_dir($full_extract_path);
       }
       else {
@@ -254,7 +312,7 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
       }
     }
     else {
-      $markup .= 'There were no datastream files in the ZIP file.';
+      $markup .= 'There were no files in the ZIP file.';
     }
 
   } else {

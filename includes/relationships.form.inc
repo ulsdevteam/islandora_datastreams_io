@@ -20,9 +20,11 @@ function islandora_datastreams_io_relationships_form(array $form, array &$form_s
   $relationship_options = array('add' => 'Add relationship', 'remove' => 'Remove relationship');
   $default_pids_value = implode('
 ', $pid_values);
-  $fetch_methods = array(ISLANDORA_DATASTREAMS_IO_FETCH_SOLR => 'Solr query',
+  $fetch_methods = array(
       ISLANDORA_DATASTREAMS_IO_FETCH_LISTPIDS => 'List of PID values' .
-        ((count($pid_values) > 0) ? ' (' . count($pid_values) . ' PID value' . ((count($pid_values) == 1) ? '' : 's') . ' supplied)' : ''),
+        ((count($pid_values) > 0) ? ' (' . count($pid_values) . ' PID value' .
+        ((count($pid_values) == 1) ? '' : 's') . ' supplied)' : ''),
+      ISLANDORA_DATASTREAMS_IO_FETCH_SOLR => 'Solr query',
       ISLANDORA_DATASTREAMS_IO_FETCH_COLLECTION => 'Collection',
       ISLANDORA_DATASTREAMS_IO_FETCH_MODEL => 'Model');
   if (!module_exists('islandora_solr')) {
@@ -48,24 +50,30 @@ function islandora_datastreams_io_relationships_form(array $form, array &$form_s
 
   $form['relationshipsform'] = array(
     'form_description' => array('#markup' => $markup_export),
-
     'pids' => array(
       '#type' => 'hidden',
       '#default_value' => $default_pids_value,
     ),
-
     'objectsformset' => array(
       '#type' => 'fieldset',
       '#title' => t('Select objects'),
       '#collapsible' => TRUE,
       '#description' => t('For the export, select the method to select the objects.'),
-
       'pids_fetch_method' => array(
         '#type' => 'radios',
         '#options' => $fetch_methods,
-        '#default_value' => (isset($form_state['input']['pids_fetch_method']) ? $form_state['input']['pids_fetch_method'] : ''),
+        '#default_value' => ((isset($form_state['input']['pids_fetch_method']) &&
+          ($form_state['input']['pids_fetch_method']) <> '') ?
+          $form_state['input']['pids_fetch_method'] : ''),
       ),
-
+      'list_of_pids' => array(
+        '#type' => 'textarea',
+        '#title' => t('PID values'),
+        '#attributes' => $pids_attributes,
+        '#description' => t('PID values, one on each line.'),
+        '#default_value' => $default_pids_value,
+        '#group' => 'relationshipsform',
+      ),
       'solr_query' => array(
         '#type' => 'textarea',
         '#title' => t('Solr query'),
@@ -75,16 +83,6 @@ function islandora_datastreams_io_relationships_form(array $form, array &$form_s
           ' do not try to use filter queries "fq" or field lists "fl" or any special Solr options for this query.',
         '#group' => 'relationshipsform',
       ),
-
-      'list_of_pids' => array(
-        '#type' => 'textarea',
-        '#title' => t('PID values'),
-        '#attributes' => $pids_attributes,
-        '#description' => t('PID values, one on each line.'),
-        '#default_value' => $default_pids_value,
-        '#group' => 'relationshipsform',
-      ),
-
       'collection' => array(
         '#type' => 'select',
         '#description' => 'Select collection',
@@ -94,7 +92,6 @@ function islandora_datastreams_io_relationships_form(array $form, array &$form_s
         '#size' => 10,
         '#group' => 'relationshipsform',
       ),
-
       'model' => array(
         '#type' => 'select',
         '#description' => 'Select model',
@@ -105,14 +102,12 @@ function islandora_datastreams_io_relationships_form(array $form, array &$form_s
         '#group' => 'relationshipsform',
       ),
     ),
-
     'operationformset' => array(
       '#type' => 'fieldset',
       '#title' => t('Operation'),
       '#collapsible' => TRUE,
       '#description' => t('Select the operation to perform on all matched objects.'),
       '#group' => 'relationshipsform',
-
       'operation' => array(
         '#type' => 'select',
         '#description' => 'Select operation to perform on the matched objects.',
@@ -146,7 +141,6 @@ function islandora_datastreams_io_relationships_form(array $form, array &$form_s
         '#default_value' => '',
       ),
     ),
-
     'submit' => array(
       '#type' => 'submit',
       '#value' => t('Update Relationships'),

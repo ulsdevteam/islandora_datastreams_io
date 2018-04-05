@@ -1,8 +1,5 @@
 <?php
 
-// Maximum number of objects returned for a Solr lookup.
-define('ISLANDORA_DATASTREAMS_IO_SOLR_LIMIT', 10000);
-
 function islandora_datastreams_io_get_exported_files($dir) {
   $files = array();
   $cdir = scandir($dir);
@@ -37,22 +34,23 @@ function islandora_datastreams_io_ds_file_parts($filename) {
  * Delete the temporary uncompressed folder from zip file upload.
  */
 function islandora_datastreams_io_dump_temp_dir($full_extract_path) {
-  $files = glob(rtrim($full_extract_path, '/') . '/*');
-  foreach($files as $file){
-    if(is_file($file))
-      unlink($file);
+  if ($full_extract_path <> '.') {
+    $files = glob(rtrim($full_extract_path, '/') . '/*');
+    foreach($files as $file){
+      if(is_file($file))
+        unlink($file);
+    }
+    // since Apple OS adds extra files to zip files, a manually created ZIP from
+    // them would not be empty and rmdir() would fail... this is BRUTE force.
+    islandora_datastreams_io_deleteDirectory($full_extract_path);
   }
-  // since MAC adds files to any zip, a manually created ZIP from a MAC will
-  // not be empty and rmdir() would fail... this is BRUTE force removing.
-  $output = array();
-  $command = 'rm -rf ' . $full_extract_path;
-  exec($command, $output, $ret);
-  //  rmdir($full_extract_path);
 }
 
-function islandora_datastreams_deleteDirectory($dir) {
-  system('rm -rf ' . escapeshellarg($dir), $retval);
-  return $retval == 0; // UNIX commands return zero on success
+function islandora_datastreams_io_deleteDirectory($dir) {
+  if ($dir <> '.') {
+    system('rm -rf ' . escapeshellarg($dir), $retval);
+    return $retval == 0; // UNIX commands return zero on success
+  }
 }
 
 function islandora_datastreams_io_get_pids_solr_query($solr_query) {
@@ -87,7 +85,7 @@ function islandora_datastreams_io_get_pids($query) {
   // 1) to get the datastreams available on this object
   $query_processor->solrQuery = $query;
   $query_processor->solrStart = 0;
-  $query_processor->solrLimit = ISLANDORA_DATASTREAMS_IO_SOLR_LIMIT;
+  $query_processor->solrLimit = variable_get('islandora_datastreams_io_solr_limit', 10000);
   $query_processor->solrParams = array('fl' => 'PID');
 
   $url = parse_url(variable_get('islandora_solr_url', 'localhost:8080/solr'));
@@ -99,8 +97,8 @@ function islandora_datastreams_io_get_pids($query) {
 
     $results = array();
     $numFound = $tmp['response']['numFound'];
-    if ($numFound == ISLANDORA_DATASTREAMS_IO_SOLR_LIMIT) {
-      drupal_set_message(t('The number of objects returned is the same as the maximum limit.  It is likely that there are more objects than ' . ISLANDORA_DATASTREAMS_IO_SOLR_LIMIT));
+    if ($numFound == variable_get('islandora_datastreams_io_solr_limit', 10000)) {
+      drupal_set_message(t('The number of objects returned is the same as the maximum limit.  It is likely that there are more objects than ' . variable_get('islandora_datastreams_io_solr_limit', 10000)));
     }
 
     if ($tmp['response']['numFound'] > 0) {
@@ -309,4 +307,13 @@ function islandora_datastreams_io_file_get_contents($filename) {
     fclose($rh);
     return $out;
   }
+}
+
+function islandora_datastreams_io_schema_success($file) {
+  // Check to see if the mimetype of the file is text/xml... if so, test the
+  // file's underlying structure against the schema.
+  $datastreams_mimetype = islandora_datastreams_io_mimetype_of_file($file);
+dpm($datastreams_mimetype);
+  dpm('SCHEMA TEST on file: ' . $file);
+  return FALSE;
 }
