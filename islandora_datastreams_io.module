@@ -30,7 +30,6 @@ function islandora_datastreams_io_menu() {
       'type' => MENU_NORMAL_ITEM,
       'page callback' => 'drupal_get_form',
       'page arguments' => array('islandora_datastreams_io_export_form'),
-      'type' => MENU_CALLBACK,
       'file' => 'includes/export.form.inc',
       'access arguments' => array(ISLANDORA_DATASTREAMS_IO_EXPORT),
     ),

@@ -104,7 +104,7 @@ function islandora_datastreams_io_review_import_file(array $form, array &$form_s
     '#suffix' => islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $uploaded_file_name, $do_push),
   );
   $form['uploaded_file_name'] = array(
-    '#type' => 'textfield',
+    '#type' => 'hidden',
     '#default_value' => $uploaded_file_name,
   );
   if (!$do_push) {
@@ -214,7 +214,7 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
     if (count($files) > 0) {
       $cannot_import_markup = $files_markup = '';
       $dsid = '';
-      $extra_files_in_zip = $file_count = $missing_islandora_objects = array();
+      $extra_files_in_zip = $file_count = $missing_islandora_objects = $extra_files_in_zip = array();
       foreach ($files as $file) {
         $ds_fileparts = islandora_datastreams_io_ds_file_parts($file);
         // Initialize the $file_count array if the file looks like it has an
@@ -241,7 +241,7 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
               // set to perform a schema test on text/xml -- these could fail
               // for that reason as well.
               if ($ds_fileparts['dsid'] == 'MODS') {
-                if ($schema_test_text_xml && islandora_datastreams_io_schema_success($file, $test_islandora_object, $ds_fileparts['dsid'], $mods_schema_uri)) {
+                if ($schema_test_text_xml && islandora_datastreams_io_mods_schema_success($full_extract_path . '/' . $file, $test_islandora_object, $mods_schema_uri)) {
                   $files_markup .= 'PID = ' . $ds_fileparts['pid'] .
                       ', DSID = ' . $ds_fileparts['dsid'] . '<br>';
                   $files_to_import++;
@@ -279,8 +279,7 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
         }
         if ($files_to_import) {
           $markup .= '<p>Clicking the [Finish] button would import ' . number_format($files_to_import) . ' Datastream/s.' .
-            (($files_to_import <> $raw_file_in_zip_count) ? $cannot_import_markup :
-              number_format($files_to_import) . ' to be imported)') .
+            (($files_to_import <> $raw_file_in_zip_count) ? $cannot_import_markup : '') .
             '</p><pre>' . $files_markup . '</pre>';
         }
         else {

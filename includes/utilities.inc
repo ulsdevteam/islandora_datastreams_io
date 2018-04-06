@@ -108,7 +108,7 @@ function islandora_datastreams_io_get_pids($query) {
     }
   }
   catch (Exception $e) {
-    error_log('EXCEPTION in _save_solr_search_session : called from ' . $_SERVER['SERVER_NAME'] .
+    error_log('EXCEPTION in islandora_datastreams_io_get_pids : called from ' . $_SERVER['SERVER_NAME'] .
 ' - ' . $_SERVER['REQUEST_URI'] . '
 ' . print_r($e, true));
   }
@@ -322,35 +322,30 @@ function islandora_datastreams_io_get_mods_schema_versions() {
   );
 }
 
-function islandora_datastreams_io_schema_success($file, $islandora_object, $dsid, $schema_uri) {
+function islandora_datastreams_io_mods_schema_success($file, $islandora_object, $schema_uri) {
   // First, check the local temp directory to see if the MODS schema has been
   // stored locally.  If not, get it and store it there for quicker access
   // for subsequent schema tests.
-  if (strtoupper($dsid) == 'MODS') {
-    $path_info = pathinfo($schema_uri);
-    $local_schema_filename = "temporary://" . $path_info['basename'];
-    if (!file_exists($local_schema_filename)) {
-      $schema_contents = file_get_contents($schema_uri);
-      file_put_contents($local_schema_filename, $schema_contents);
+  $path_info = pathinfo($schema_uri);
+  $local_schema_filename = "temporary://" . $path_info['basename'];
+  if (!file_exists($local_schema_filename)) {
+    $schema_contents = file_get_contents($schema_uri);
+    file_put_contents($local_schema_filename, $schema_contents);
+  }
+  // Get the datatream from the islandora_object -- and perform the schema check.
+  try {
+    $mods_content = file_get_contents($file);
+    $doc0 = new DOMDocument();
+    if (!(@$doc0->loadXML($mods_content) === false)) {
+      return ($doc0->schemaValidate($local_schema_filename));
+    } else {
+      return FALSE;
     }
-
-    // Get the datatream from the islandora_object -- and perform the schema check.
-    if (isset($islandora_object['MODS'])) {
-      $mods_datastream = islandora_datastream_load('MODS', $islandora_object);
-      try {
-        $got_mods = $mods_datastream->getContent("temporary://mods");
-        if ($got_mods) {
-          $mods_content = file_get_contents("temporary://mods");
-          $doc0 = new DOMDocument();
-          return !(!@$doc0->load($mods_content) || (!@$doc0->schemaValidate($local_schema_filename)));
-        }
-      }
-      catch (Exception $e) {
-         die('EXCEPTION in _save_solr_search_session : called from ' . $_SERVER['SERVER_NAME'] .
-      ' - ' . $_SERVER['REQUEST_URI'] . '<pre>
-      ' . print_r($e, true));
-      }
-    }
+  }
+  catch (Exception $e) {
+     die('EXCEPTION in islandora_datastreams_io_schema_success : called from ' . $_SERVER['SERVER_NAME'] .
+  ' - ' . $_SERVER['REQUEST_URI'] . '<pre>
+  ' . print_r($e, true));
   }
   return TRUE;
 }
