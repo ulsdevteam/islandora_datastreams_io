@@ -103,10 +103,14 @@ function islandora_datastreams_io_admin_form() {
     ),
     'mods_schema_xsd_version' => array(
       '#type' => 'select',
-      '#title' => 'MODS Version 3 schema.',
-      '#description' => 'Select the version of the MODS schema to be used for checking incoming MODS xml.',
+      '#title' => 'MODS Schema',
+      '#description' => 'Select the version of the MODS schema to be used for ' . 
+        'checking incoming MODS xml.  Regardless of whether or not the ' .
+        '"hook_mods_schema_check ONLY" is selected, any module that codes for ' .
+        'this will be able to make any MODS import fail by returning FALSE;  ' .
+        'the selected MODS schema would also run after all modules\' have run.',
       '#options' => $mods_schema_versions,
-      '#default_value' => variable_get('islandora_datastreams_io_mods_schema_xsd_version', 'MODS 3.7'),
+      '#default_value' => variable_get('islandora_datastreams_io_mods_schema_xsd_version', 'MODS 3.0'),
     ),
   );
 

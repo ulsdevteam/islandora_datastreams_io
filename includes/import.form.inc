@@ -241,7 +241,8 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
               // set to perform a schema test on text/xml -- these could fail
               // for that reason as well.
               if ($ds_fileparts['dsid'] == 'MODS') {
-                if ($schema_test_text_xml && islandora_datastreams_io_mods_schema_success($full_extract_path . '/' . $file, $test_islandora_object, $mods_schema_uri)) {
+                $import_mods_filename = $full_extract_path . '/' . $file;
+                if ($schema_test_text_xml && islandora_datastreams_io_mods_schema_success($import_mods_filename, $mods_schema_uri)) {
                   $files_markup .= 'PID = ' . $ds_fileparts['pid'] .
                       ', DSID = ' . $ds_fileparts['dsid'] . '<br>';
                   $files_to_import++;

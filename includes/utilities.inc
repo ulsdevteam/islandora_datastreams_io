@@ -311,7 +311,8 @@ function islandora_datastreams_io_file_get_contents($filename) {
 
 function islandora_datastreams_io_get_mods_schema_versions() {
   return array(
-    'https://www.loc.gov/standards/mods/v3/mods-3-7.xsd' => 'MODS 3.7',
+    '' => 'hook_mods_schema_check ONLY',
+    'https://www.loc.gov/standards/mods/v3/mods-3-7.xsd' => 'MODS 3.7 Schema',
     'https://www.loc.gov/standards/mods/v3/mods-3-6.xsd' => 'MODS 3.6',
     'https://www.loc.gov/standards/mods/v3/mods-3-5.xsd' => 'MODS 3.5',
     'https://www.loc.gov/standards/mods/v3/mods-3-4.xsd' => 'MODS 3.4',
@@ -322,7 +323,27 @@ function islandora_datastreams_io_get_mods_schema_versions() {
   );
 }
 
-function islandora_datastreams_io_mods_schema_success($file, $islandora_object, $schema_uri) {
+function islandora_datastreams_io_mods_schema_success($import_mods_filename, $schema_uri) {
+  // Potentially handle the schema check with any module/s that have coded for 
+  // a hook_mods_schema_check method.
+  $retval = TRUE;
+  foreach (module_implements('mods_schema_check') as $module) {
+    $function = $module . '_mods_schema_check';
+    // will call all modules implementing hook_mods_schema_check
+    // and can pass each argument as reference determined
+    // by the function declaration
+    $retval &= $function($import_mods_filename);
+  }
+  // If there was a hook_mods_schema_check in any module, $retval holds the
+  // Success / Failure of that function/s.  If the $schema_uri is not set,
+  // ONLY the value of $retval at this point would be returned (meaning that
+  // a configuration that has "NONE" selected for the "MODS Schema" and no
+  // hook_mods_schema_check coded in any installed modules, the return code
+  // would be TRUE).
+  if (!$schema_uri) {
+    return $retval;
+  }
+
   // First, check the local temp directory to see if the MODS schema has been
   // stored locally.  If not, get it and store it there for quicker access
   // for subsequent schema tests.
@@ -334,12 +355,12 @@ function islandora_datastreams_io_mods_schema_success($file, $islandora_object, 
   }
   // Get the datatream from the islandora_object -- and perform the schema check.
   try {
-    $mods_content = file_get_contents($file);
+    $mods_content = file_get_contents($import_mods_filename);
     $doc0 = new DOMDocument();
     if (!(@$doc0->loadXML($mods_content) === false)) {
-      return ($doc0->schemaValidate($local_schema_filename));
+      $retval = ($doc0->schemaValidate($local_schema_filename));
     } else {
-      return FALSE;
+      $retval = FALSE;
     }
   }
   catch (Exception $e) {
@@ -347,7 +368,7 @@ function islandora_datastreams_io_mods_schema_success($file, $islandora_object, 
   ' - ' . $_SERVER['REQUEST_URI'] . '<pre>
   ' . print_r($e, true));
   }
-  return TRUE;
+  return $retval;
 }
 
 function islandora_datastreams_io_get_fetch_methods($pid_values) {
