@@ -31,7 +31,7 @@ function islandora_datastreams_io_admin_form() {
 
   $about_islandora_datastreams_io_markup = '<blockquote><p>This module provides a GUI web ' .
       'wrapper for several of the drush functions provided by ' . 
-      l('islandora_datastream_crud', 'https://github.com/SFULibrary/islandora_datastream_crud',
+      l('Islandora Datastream CRUD', 'https://github.com/SFULibrary/islandora_datastream_crud',
           array('attributes'=>array('target' => '_blank'))) .
       ' as well as some additional utility functions for batch processing of ' . 
       'Islandora object datastreams.  It optionally uses the ' .

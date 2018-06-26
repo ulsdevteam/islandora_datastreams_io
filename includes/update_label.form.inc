@@ -181,9 +181,43 @@ function islandora_datastreams_io_update_label_form_submit(array $form, array &$
 
 function islandora_datastreams_io_update_label($islandora_object) {
   // Get the object's datastream saved to a temp file
-  $object_MODS = $islandora_object['MODS']->getContent();
+  $object_MODS = $islandora_object['MODS']; // ->getContent();
   // $title
   // Pull out the titleInfo/title and compare this to the current object->label
   // $islandora_object->label = 'updated';
+  $tempFilename = tempnam("/tmp", "MODS_xml_initial_");
+  // save the html body to a file -- datastream can load from the file
+  $mods_file = $object_MODS->getContent($tempFilename);
+  islandora_datastreams_io_doLabel($islandora_object, $mods_file);
+
+  // ISLANDORA-189
+  unlink($tempFilename);
   return ($got_datastream && (isset($islandora_object[$dsid])));
 }
+
+/**
+ * This will update the object label based on the MODS titleInfo title value.
+ */
+function islandora_datastreams_io_doLabel($object, $mods_content) {
+  echo $mods_content . "\n-------------------------------\n\n";
+
+  $mods_xml = new SimpleXMLElement($mods_content);
+  $mods_xml->registerXPathNamespace('mods', 'http://www.loc.gov/mods/v3');
+
+  $title_results = $mods_xml->xpath('//mods:mods[1]/mods:titleInfo/mods:title');
+  if (is_array($title_results)) {
+    $titles = $title_results[0];
+    if (is_object($titles)) {
+      $titles_arr = (array) $titles;
+      if (is_array($titles_arr)) {
+        $title = trim($titles_arr[0]);
+        echo $title . "\n";
+        if ($object->label <> $title) {
+          $object->label = $title;
+        }
+      }
+    }
+  }
+  return;
+}
+
