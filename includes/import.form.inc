@@ -270,14 +270,17 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
       }
       if (!$do_push) {
         $markup .= '<h3>ZIP archive contains ' . number_format($raw_file_in_zip_count) . ' files</h3>';
-        if (count($cannot_import_reasons) > 0) {
-          $cannot_import_markup = '<ul>';
-          foreach ($cannot_import_reasons as $file => $reason) {
-            $cannot_import_markup .= '<li>' . $reason . ' for file "' . $file . '"</li>';
-          }
-          $cannot_import_markup .= '</ul>';
-          
+
+        if (isset($cannot_import_reasons)) {
+          if (count($cannot_import_reasons) > 0) {
+            $cannot_import_markup = '<ul>';
+            foreach ($cannot_import_reasons as $file => $reason) {
+              $cannot_import_markup .= '<li>' . $reason . ' for file "' . $file . '"</li>';
+            }
+            $cannot_import_markup .= '</ul>';
+          } 
         }
+
         if ($files_to_import) {
           $markup .= '<p>Clicking the [Finish] button would import ' . number_format($files_to_import) . ' Datastream/s.' .
             (($files_to_import <> $raw_file_in_zip_count) ? $cannot_import_markup : '') .
