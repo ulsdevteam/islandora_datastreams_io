@@ -296,11 +296,8 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
         // Determine mimetype of existing file and compare to old mimetype
         $islandora_object = islandora_object_load($ds_fileparts['pid']);
         $old_mimetype = $islandora_object[$ds_fileparts['dsid']]->mimeType;
-        watchdog('test', 'Old mimetype is ' . $old_mimetype);
         $new_mimetype = islandora_datastreams_io_mimetype_of_file($file);
-        watchdog('test', 'New mimetype is ' . $new_mimetype);
         $mimetype_command = ($old_mimetype != $new_mimetype ? " --datastreams_mimetype={$new_mimetype}" : "" ); 
-        watchdog('test', 'Mimetype command is ' . $mimetype_command);
 
         // If datastream label is empty, use this value, else the previous label is used.
         $datastreams_label = 'Imported ' . $dsid;
