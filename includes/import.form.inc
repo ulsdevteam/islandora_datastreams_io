@@ -251,6 +251,11 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
                   $cannot_import_reasons[$file] = $ds_fileparts['pid'] . ' failed a schema test';
                 }
               }
+	      else {
+                $files_markup .= 'PID = ' . $ds_fileparts['pid'] .
+                    ', DSID = ' . $ds_fileparts['dsid'] . '<br>';
+                $files_to_import++;
+              }
             }
             else {
               $missing_islandora_objects[] = $ds_fileparts['pid'];
@@ -293,16 +298,19 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
         islandora_datastreams_io_dump_temp_dir($full_extract_path);
       }
       else {
-        // Determine mimetype
-        $datastreams_mimetype = islandora_datastreams_io_mimetype_of_file($file);
+        // Determine mimetype of existing file and compare to old mimetype
+        $islandora_object = islandora_object_load($ds_fileparts['pid']);
+        $old_mimetype = $islandora_object[$ds_fileparts['dsid']]->mimeType;
+        $new_mimetype = islandora_datastreams_io_mimetype_of_file($file);
+        $mimetype_command = ($old_mimetype != $new_mimetype ? " --datastreams_mimetype={$new_mimetype}" : "" ); 
+
         // If datastream label is empty, use this value, else the previous label is used.
         $datastreams_label = 'Imported ' . $dsid;
 
         $this_domain = 'http://' . $_SERVER['HTTP_HOST'];
         $drush_command = 'drush islandora_datastream_crud_push_datastreams -u ' . $user->uid .
                          ' --datastreams_source_directory=' . $full_extract_path .
-                         ' --datastreams_mimetype="' . $datastreams_mimetype . '" ' .
-                         ' --datastreams_label="' . $datastreams_label . '" ' . 
+                         $mimetype_command .
                          ' -y ' .
                          ' --uri=' . $this_domain;
 
