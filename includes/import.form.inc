@@ -251,6 +251,11 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
                   $cannot_import_reasons[$file] = $ds_fileparts['pid'] . ' failed a schema test';
                 }
               }
+	      else {
+                $files_markup .= 'PID = ' . $ds_fileparts['pid'] .
+                    ', DSID = ' . $ds_fileparts['dsid'] . '<br>';
+                $files_to_import++;
+              }
             }
             else {
               $missing_islandora_objects[] = $ds_fileparts['pid'];
