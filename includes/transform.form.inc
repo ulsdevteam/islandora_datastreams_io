@@ -41,7 +41,7 @@ function islandora_datastreams_io_transform_form(array $form, array &$form_state
   asort($tmp_collections);
   $collections = array();
   foreach ($tmp_collections as $k => $collection) {
-    $collections['info:fedora/' . $k] = $collection;
+    $collections['info:fedora/' . $k] = $collection . ' (' . $k . ')';
   }
 
   foreach ($tmp_model_options as $k => $model) {
