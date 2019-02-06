@@ -206,12 +206,18 @@ function islandora_datastreams_io_export_form_submit(array $form, array &$form_s
       }
       $files = islandora_datastreams_io_get_exported_files($full_export_path);
       chdir($full_export_path);
-      $zip = new ZipArchive;
-      $zip->open($zip_name, ZipArchive::CREATE);
-      foreach ($files as $file) {
-        $zip->addFile($file);
+      try {
+        $zip = new ZipArchive;
+        $zip->open($zip_name, ZipArchive::CREATE);
+        foreach ($files as $file) {
+          $zip->addFile($file);
+        }
+        $zip->close();
+      } catch (Exception $exc) {
+        @unlink($zip_name);
+        drupal_set_message(t('There was an error while trying to zip the files for this export.  Please try a smaller set of objects.'), 'error');
+        echo $exc->getTraceAsString();
       }
-      $zip->close();
 
       $base64_zip_name = base64_encode($zip_name);
       $zip_size = filesize($zip_name);
@@ -223,6 +229,16 @@ function islandora_datastreams_io_export_form_submit(array $form, array &$form_s
 
       drupal_set_message('The export of datastreams is complete.  ' .
           $download_link . ' ' . islandora_datastreams_io_human_filesize($zip_size));
+
+      // Remove the temporary files and the folder
+      foreach ($files as $file) {
+        if (file_exists($file)) {
+          unlink($file);
+        }
+      }
+      if (!file_exists($zip_name)) {
+        @drupal_rmdir($full_export_path);
+      }
 
       // Remove the temporary files
       unlink($pids_file);
