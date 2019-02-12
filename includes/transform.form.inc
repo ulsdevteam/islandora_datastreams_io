@@ -49,9 +49,10 @@ function islandora_datastreams_io_transform_form(array $form, array &$form_state
   }
 
   $markup_export = '<p>' . t('This will allow a specific datastream from a ' .
-    'given set of objects to be downloaded. A set of objects can be defined ' .
-    'by a Solr query, by collection membership, by content model, or by a ' .
-    'list of PID values.') . '</p>';
+    'given set of objects to be transformed via XSL transformation (XML ' .
+    'datastreams only) or copied.  For example, to copy the PDF datastream to ' .
+    'one that is named "COPY_PDF" select `PDF` for "Datastream" and `COPY_PDF` ' .
+    'under "Destination Datastream" but leave "XSLT Transform" empty.') . '</p>';
 
   $form['transformsform'] = array(
     'form_description' => array('#markup' => $markup_export),

@@ -34,9 +34,10 @@ function islandora_datastreams_io_relationships_form(array $form, array &$form_s
     $model_options['info:fedora/' . $k] = $model;
   }
 
-  $markup_export = '<p>' . t('This will allow a specific datastream from a given set of objects to be downloaded. ' .
-          'A set of objects can be defined by a Solr query, by collection membership, by content ' .
-          'model, or by a list of PID values.') . '</p>';
+  $markup_export = '<p>' . t('This will allow a specific relationship to be ' .
+    'added or removed from a given set of objects. The set of objects can be ' .
+    'defined by a Solr query, by collection membership, by content model, or ' .
+    'by a list of PID values.') . '</p>';
 
   if (array_key_exists('values', $form_state)) {
     $markup_export .= islandora_datastreams_io_pids_report_markup($form_state['values']);

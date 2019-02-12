@@ -27,10 +27,12 @@ function islandora_datastreams_io_import_form(array $form, array &$form_state) {
 }
 
 function islandora_datastreams_io_import_pickfile($form, &$form_state) {
-  $markup_import = '<p>' . t('This will allow a specific datastream from a ' . 
-      'given set of objects to be downloaded.  A set of objects can be ' .
-      'defined by a Solr query, by collection membership, by content model, ' .
-      'or by a list of PID values.') . '</p>';
+  $markup_import = '<p>' . t('This will allow a ZIP file to be imported that ' .
+      'contains object datastream files.  The datastream files must not contain ' .
+      'subfolders and each filename must be named in such a way that the ' .
+      'filename determines which object PID and datastream to replace, for example: ' .
+      'the MODS for the object "islandora:12345" would have to be named ' .
+      '`islandora_12345_MODS.xml`.') . '</p>';
 
   // Since this is used to clean up the temp file, and the second and third step 
   // could potentially overwrite this value, make an empty value here - and simply
