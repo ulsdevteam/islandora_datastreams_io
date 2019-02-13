@@ -5,4 +5,5 @@ version = 7.x
 core = 7.x
 dependencies[] = islandora
 dependencies[] = islandora_datastream_crud
+dependencies[] = xml_forms
 configure = admin/islandora/datastreams_io

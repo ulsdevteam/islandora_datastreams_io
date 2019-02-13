@@ -98,7 +98,7 @@ function islandora_datastreams_io_admin_form() {
     '#title' => 'Schema checking',
     'schema_test_text_xml' => array(
       '#type' => 'checkbox',
-      '#title' => 'Perform schema test on import of any text/xml files.',
+      '#title' => 'Perform schema test on import or transform to object MODS.',
       '#default_value' => variable_get('islandora_datastreams_io_schema_test_text_xml', TRUE),
     ),
     'mods_schema_xsd_version' => array(
