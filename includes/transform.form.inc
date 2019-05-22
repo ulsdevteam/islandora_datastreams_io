@@ -24,7 +24,6 @@ function islandora_datastreams_io_transform_form(array $form, array &$form_state
   $tmp_model_options = islandora_datastreams_io_get_models();
   $all_datastreams = islandora_datastreams_io_get_datastreams();
   $datastreams = islandora_datastreams_io_textxml_datastreams($all_datastreams);
-
   // This will loop through all datastreams and add an asterisk to the ones
   // that are not part of the textxml mimetype list of datastreams.  This "*"
   // character is used in the javascript to disable the file upload button
@@ -229,11 +228,14 @@ function islandora_datastreams_io_transform_form_submit(array $form, array &$for
     // ONLY use the $_FILE if the $selected_dsid does not contain "*"
     if (strstr($selected_dsid, "*") == '') {
       if (isset($_FILES['files']['name']['transform']) && isset($_FILES['files']['size']['transform'])) {
-        if ($_FILES['files']['type']['transform'] == 'text/xml') {
+        if ($_FILES['files']['type']['transform'] == 'text/xml' ||
+            $_FILES['files']['type']['transform'] == 'application/xml') {
           $transform = $_FILES['files']['tmp_name']['transform'];
         }
         elseif (isset($_FILES['files']['type']['transform']) && $_FILES['files']['type']['transform']) {
-          drupal_set_message('The transform file was not a "text/xml" type of file and can not be used.' . $_FILES['files']['type']['transform'], 'warning');
+          drupal_set_message('The transform file was not a "text/xml" or ' .
+              '"application/xml" type of file and can not be used.' .
+              $_FILES['files']['type']['transform'], 'warning');
         }
       }
     }

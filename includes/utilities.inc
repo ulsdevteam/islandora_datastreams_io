@@ -79,7 +79,6 @@ function islandora_datastreams_io_get_pids_model($model) {
 function islandora_datastreams_io_get_pids($query) {
   module_load_include('inc', 'islandora_solr', 'includes/utilities');
   $query_processor = new IslandoraSolrQueryProcessor();
-
   $ret_arr = array();
   // run two queries --
   // 1) to get the datastreams available on this object
@@ -163,10 +162,11 @@ function islandora_datastreams_io_get_datastreams($pid = '') {
 }
 
 /**
- * Helper function that will take the datastreams that are returned by the function
- * islandora_datastreams_io_get_datastreams -- and inspect them to see whether or not
- * the datastreams are a "text/xml" mimetype.  This is needed to present the user with
- * a set of datastreams that can have a transform run against them.
+ * Helper function that will take the datastreams that are returned by the
+ * function islandora_datastreams_io_get_datastreams -- and inspect them to see
+ * whether or not the datastreams are either "text/xml" or "application/xml"
+ * mimetype.  This is needed to present the user with a set of datastreams that
+ * can have a transform run against them.
  *
  * @param array $datastreams
  * @param type $pid
@@ -179,13 +179,14 @@ function islandora_datastreams_io_textxml_datastreams($datastreams, $pid = '') {
   $solr = new Apache_Solr_Service($url['host'], $url['port'], $url['path'] . '/');
   $solr->setCreateDocuments(FALSE);
 
-  // check the datastream fedora_datastream_latest_OBJ_MIMETYPE_ms: has values that are "text/xml"
+  // Check the datastream fedora_datastream_latest_OBJ_MIMETYPE_ms: has values
+  // that are "text/xml" or "application/xml".
   foreach ($datastreams as $dsid => $dsid_desc) {
     $mimetype_field = 'fedora_datastream_latest_' .$dsid . '_MIMETYPE_ms';
     if ($pid) {
-      $query_processor->solrQuery = 'PID:' . str_replace(array("/", ":", "-", "+"), array("\/", "\:", "\-", "\+"), $pid) . ' AND ' . $mimetype_field . ':text\/xml';
+      $query_processor->solrQuery = 'PID:' . str_replace(array("/", ":", "-", "+"), array("\/", "\:", "\-", "\+"), $pid) . ' AND (' . $mimetype_field . ':text\/xml OR ' . $mimetype_field . ':application\/xml)';
     } else {
-      $query_processor->solrQuery = $mimetype_field . ':text\/xml' ;
+      $query_processor->solrQuery = '(' . $mimetype_field . ':text\/xml OR ' . $mimetype_field . ':application\/xml)';
     }
     $query_processor->solrStart = 0;
     $query_processor->solrLimit = 1;
