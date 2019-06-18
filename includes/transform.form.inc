@@ -220,8 +220,7 @@ function islandora_datastreams_io_transform_form_submit(array $form, array &$for
       break;
   }
   if ($pids) {
-    module_load_include('inc', 'islandora', 'includes/utilities');
-    $pids = islandora_datastreams_io_namespace_accessible($pids);
+    $pids = islandora_datastreams_io_pids_namespace_accessible($pids);
     $bad_pids = $skipped = array();
     $updated_count = 0;
     $pids_arr = explode("\r\n", $pids);
