@@ -216,7 +216,8 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
     if (count($files) > 0) {
       $cannot_import_markup = $files_markup = '';
       $dsid = '';
-      $extra_files_in_zip = $file_count = $missing_islandora_objects = $extra_files_in_zip = array();
+      $extra_files_in_zip = $file_count = $missing_islandora_objects =
+        $pid_update_datastreams = array();
       foreach ($files as $file) {
         $ds_fileparts = islandora_datastreams_io_ds_file_parts($file);
         // Initialize the $file_count array if the file looks like it has an
@@ -228,6 +229,7 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
       foreach ($files as $file) {
         $ds_fileparts = islandora_datastreams_io_ds_file_parts($file);
         if (isset($ds_fileparts['pid']) && isset($ds_fileparts['namespace']) && isset($ds_fileparts['dsid'])) {
+          $pid_update_datastreams[$ds_fileparts['dsid']][] = $ds_fileparts['pid'];
           if (!islandora_namespace_accessible($ds_fileparts['pid'])) {
             drupal_set_message('PID ' . $ds_fileparts['pid'] . ' is restricted and will be skipped.');
             @unlink($full_extract_path . '/' . $file);
@@ -308,14 +310,12 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
 
         // If datastream label is empty, use this value, else the previous label is used.
         $datastreams_label = 'Imported ' . $dsid;
-
         $this_domain = 'http://' . $_SERVER['HTTP_HOST'];
         $drush_command = 'drush islandora_datastream_crud_push_datastreams -u ' . $user->uid .
                          ' --datastreams_source_directory=' . $full_extract_path .
                          $mimetype_command .
                          ' -y ' .
                          ' --uri=' . $this_domain;
-
         $output = $return_var = array();
         exec($drush_command, $output, $return_var);
         if ($return_var == -1 || $return_var == 255) {
@@ -332,8 +332,8 @@ function islandora_datastreams_io_analyze_uploaded_zipfile($extract_path, $filen
       }
       // If the dsid is MODS - and there is a transform to DC configured, we
       // need to trigger this here.
-      if ($dsid == 'MODS') {
-
+      if (array_key_exists('MODS', $pid_update_datastreams) && count($pid_update_datastreams['MODS']) > 0) {
+        islandora_datastreams_io_derive_new_dc($pid_update_datastreams['MODS']);
       }
     }
     else {

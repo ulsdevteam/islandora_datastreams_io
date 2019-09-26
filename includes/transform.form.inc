@@ -273,6 +273,7 @@ function islandora_datastreams_io_transform_form_submit(array $form, array &$for
 }
 
 function islandora_datastreams_io_transform_datastream($islandora_object, $dsid, $destination_dsid, $transform = '') {
+  module_load_include('inc', 'islandora_datastreams_io', 'includes/utilities');
   $transform_xsl = $transform;
   // If there is a value set for $destination_dsid, use it -- else this is
   // a self-transform.
@@ -292,7 +293,6 @@ function islandora_datastreams_io_transform_datastream($islandora_object, $dsid,
         );
       // This file must be deleted in the process function that called this.
       $bytes_written = islandora_datastreams_io_file_put_contents($xml_file, $new_ds_content);
-      drupal_set_message('bytes = ' . $bytes_written);
     } elseif ($got_datastream) {
       $new_ds_content = islandora_datastreams_io_file_get_contents($xml_file);
     }
@@ -310,6 +310,11 @@ function islandora_datastreams_io_transform_datastream($islandora_object, $dsid,
 
     if (!$got_datastream) {
       drupal_set_message('The datastream could not be retrieved for object ' . $islandora_object->id . '.', 'warning');
+    }
+    else {
+      if ($destination_dsid == 'MODS') {
+        islandora_datastreams_io_derive_new_dc(array($islandora_object->id));
+      }
     }
     return ($got_datastream && (isset($islandora_object[$dsid])));
   }

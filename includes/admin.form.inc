@@ -55,11 +55,11 @@ function islandora_datastreams_io_admin_form() {
       '<p>' . l('Update Object label from MODS titleInfo/title', 
           'admin/islandora/datastreams_io/update_label').
           ' - update object label value from MODS for specific objects.</p>';
+  $transforms_k_v = array();
   if (module_exists('xml_form_builder')) {
     $associations = array();
     module_load_include('inc', 'xml_form_builder', 'includes/associations');
     $transforms = xml_form_builder_get_transforms($associations);
-    $transforms_k_v = array();
     // Why does this seem to be using the value for the keys?
     foreach ($transforms as $k => $v) {
       $transforms_k_v[$v] = $k;

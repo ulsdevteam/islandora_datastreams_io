@@ -97,7 +97,9 @@ function islandora_datastreams_io_get_pids($query) {
     $results = array();
     $numFound = $tmp['response']['numFound'];
     if ($numFound == variable_get('islandora_datastreams_io_solr_limit', 10000)) {
-      drupal_set_message(t('The number of objects returned is the same as the maximum limit.  It is likely that there are more objects than ' . variable_get('islandora_datastreams_io_solr_limit', 10000)));
+      drupal_set_message(t('The number of objects returned is the same as the ' .
+        'maximum limit.  It is likely that there are more objects than ' .
+        variable_get('islandora_datastreams_io_solr_limit', 10000)));
     }
 
     if ($tmp['response']['numFound'] > 0) {
@@ -421,5 +423,53 @@ function islandora_datastreams_io_pids_report_markup($form_values) {
     return '<div class="datastreams_io_report"><h3>Selected PID values (' .
       $fetch_message . ')</h3>It appears that the form was not submitted or that no PID values ' .
         'resulted.  "' . $temp_pids_filename . '" did not exist.</div>';
+  }
+}
+
+/**
+ * For all of the objects specified by the PIDS array, will perform the MODS
+ * to DC derivative.
+ *
+ * This will get the configured value for MODS to DC transform -- and if that
+ * is configured, then it will loop over the $pids array to call the derivative
+ * creation on each.  Upon completion, this will display a message indicating
+ * how many objects' DC were regenerated.
+ *
+ * @param array $pids
+ *   Array of islandora PID values.
+ */
+function islandora_datastreams_io_derive_new_dc($pids = array()) {
+  module_load_include('inc', 'islandora_datastreams_io', 'includes/transform.form');
+  $updated_count = 0;
+  $mods_to_dc_transform = variable_get('islandora_datastreams_io_mods_to_dc_transform', '');
+  if ($mods_to_dc_transform) {
+    foreach ($pids as $pid) {
+      if ($pid) {
+        if (islandora_datastreams_io_do_mods_2_dc($pid, $mods_to_dc_transform)) {
+          $updated_count++;
+        }
+      }
+    }
+    drupal_set_message(t('After import of the new MODS, @howmany object DC ' .
+        (($updated_count == 1) ? 'was' : 'were') .' updated.',
+        array('@howmany' => $updated_count)), 'status');
+  }
+}
+
+/**
+ *
+ *
+ * @param string $pid
+ *   The islandora PID value representing an islandora object.
+ * @param string $mods_to_dc_transform
+ *   The path to the MODS to DC transform.
+ * @return boolean
+ *   Whether or not the given object's MODS could be transformed to DC.
+ */
+function islandora_datastreams_io_do_mods_2_dc($pid, $mods_to_dc_transform) {
+  $islandora_object = islandora_object_load($pid);
+  if (is_object($islandora_object)) {
+    return (islandora_datastreams_io_transform_datastream($islandora_object,
+        'MODS', 'DC', $mods_to_dc_transform));
   }
 }
