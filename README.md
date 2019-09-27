@@ -23,7 +23,7 @@ There are no options to configure for this module.  Once this module is installe
 Configuration for this module /admin/islandora/datastreams_io also serves as the launching point for the various operating modes.
 Perform schema test on import or transform to object MODS.
 
-When the *Perform schema test on import or transform to object MODS.* checkbox is checked, the code will perform a schema tests for MODS datastreams as well as provides a hook that can be used in coding a schema check within any user-developed module (see "Writing a custom hook_mods_schema_check" below).
+**Schema Checking** when the **Perform schema test on import or transform to object MODS.** checkbox is checked, whenever the destination datastream is MODS (via either the **Import** or **XSLT Transform** mode is used), the code will perform a schema tests for MODS datastreams as well as provides a hook that can be used in coding a schema check within any user-developed module (see "Writing a custom hook_mods_schema_check" below).
 
 **MODS to DC XSL Transform** creates DC derivatives for any set of objects that have had their MODS changed (via either Import or XSLT Transform mode).  Selections are based off of the XML Form Builder's configured "MODS to DC" transforms and may include any choices that are added to the `xml_form_builder_get_transforms` choices because that function calls a hook to any module that wants to add a MODS to DC transform selection.
 
@@ -44,7 +44,7 @@ Select the specific datastream and define a list of objects (see **Fetch Methods
 ## 2. Import ZIP file containing Datastreams (Input)
 Given the ZIP file from the **Exporting Datastreams** step, the files can be manipulated by a third-party program and then zipped back up to import back into the system.  Simply navigate to the import page at and upload the zip file.  The form will inspect the ZIP file to determine the objects and specific datastream identifier (DSID) and prompt the user whether or not to import the files that are in the ZIP file.
 
-When any MODS datastreams are imported, it may be checked against one of the MODS version 3.x schemas (see section above on configuration).
+When any files are imported as the MODS datastreams, the MODS xml may be checked against one of the MODS version 3.x schemas and potentially trigger the MODS to DC transform operation. See the **Configuration** on **Schema Checking** and **MODS to DC XSL Transform** sections for more info.
 
 ## 3. Add/Remove relationships for objects
 This feature allows a specific relationship to either be added or removed from a set of objects.  In order to use this, several parameters need to be provided.  These values should be familiar to developers because they correspond to two thirds of the triples that set the relationship to the object.  The other value stores the namespace related to the relationship ontology.  After this process runs, the status of the relationship updates are displayed on the screen.  The user should test that their relationships exist as they intended.
@@ -58,7 +58,9 @@ The relationship is skipped when it exists already in cases where it is being ad
 ## 4. Modify or Copy datastream optionally using an xslt transformation
 This method will allow a datastream to be transformed using an XSLT transform file.  This will only work on datastreams that are text/xml.  Also, the XSLT transform must be valid.
 
-Additionally, a datastream could be copied to a new  datastream identifier without any transform.  We needed to copy a large number of OBJ datastreams to be PDF datastreams.  In order to do this, we simply selected the PID values (using "List of PID values" for the Select Objects mode), selected the OBJ datastream as the source to transform, skipped the transform option, and set the destination datastream to PDF. 
+Additionally, a datastream could be copied to a new  datastream identifier without any transform.  We needed to copy a large number of OBJ datastreams to be PDF datastreams.  In order to do this, simply select the objects and select the OBJ datastream as the source to transform, skipped the transform option, and set the destination datastream to PDF or PDF_COPY or whatever you need.  Keep in mind that this option will create copies of datastreams -- and if those datastreams are large, you should consider the amount of space that this would entail.
+
+When the **Destination Datastream** is set to "**MODS**", the MODS xml may be checked against one of the MODS version 3.x schemas and potentially trigger the MODS to DC transform operation. See the **Configuration** on **Schema Checking** and **MODS to DC XSL Transform** sections for more info.
 
 ## 5. Update object label from MODS titleInfo/title value
 This method will allow a set of objects to have their object label value (displayed as the title) with their current MODS `titleInfo/title` node value.
