@@ -273,7 +273,7 @@ function islandora_datastreams_io_mimetype_of_file($file) {
  */
 function islandora_datastreams_io_pids_namespace_accessible($pids) {
   module_load_include('inc', 'islandora', 'includes/utilities');
-  $inspect_pids = explode("\n", $pids);
+  $inspect_pids = explode(PHP_EOL, $pids);
   $return_pids = array();
   foreach ($inspect_pids as $pid) {
     $pid = trim($pid);
@@ -408,7 +408,7 @@ function islandora_datastreams_io_pids_report_markup($form_values) {
         break;
     }
     $temp_pids_file = file_get_contents($temp_pids_filename);
-    $temp_pids_file_as_arr = explode("\n", $temp_pids_file);
+    $temp_pids_file_as_arr = explode(PHP_EOL, $temp_pids_file);
 
     foreach ($temp_pids_file_as_arr as $key => $pid) {
       $temp_pids_file_as_arr[$key] = l($pid, 'islandora/object/' . $pid,
