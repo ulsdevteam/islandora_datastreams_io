@@ -198,7 +198,7 @@ function islandora_datastreams_io_relationships_form_submit(array $form, array &
   if ($pids) {
     $bad_pids = $good_pids = $relationship_skipped = array();
     $updated_count = 0;
-    $pids_arr = explode("\n", $pids);
+    $pids_arr = explode(PHP_EOL, $pids);
     $operation = $form_state['values']['operation'];
     $namespace = $form_state['values']['namespace'];
     $predicate = $form_state['values']['predicate'];

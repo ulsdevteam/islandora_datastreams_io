@@ -146,7 +146,7 @@ function islandora_datastreams_io_update_label_form_submit(array $form, array &$
   if ($pids) {
     $bad_pids = $skipped = array();
     $updated_count = 0;
-    $pids_arr = explode("\r\n", $pids);
+    $pids_arr = explode(PHP_EOL, $pids);
 
     foreach ($pids_arr as $pid) {
       $pid = trim($pid);

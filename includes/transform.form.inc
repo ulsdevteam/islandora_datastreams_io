@@ -223,7 +223,7 @@ function islandora_datastreams_io_transform_form_submit(array $form, array &$for
     $pids = islandora_datastreams_io_pids_namespace_accessible($pids);
     $bad_pids = $skipped = array();
     $updated_count = 0;
-    $pids_arr = explode("\r\n", $pids);
+    $pids_arr = explode(PHP_EOL, $pids);
 
     $transform = '';
     // ONLY use the $_FILE if the $selected_dsid does not contain "*"

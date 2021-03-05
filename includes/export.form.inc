@@ -245,7 +245,7 @@ function islandora_datastreams_io_export_form_submit(array $form, array &$form_s
     }
     else {
       $bad_pids = $good_pids = array();
-      $pids_arr = explode("\n", $pids);
+      $pids_arr = explode(PHP_EOL, $pids);
       foreach ($pids_arr as $pid) {
         $pid = str_replace("\\r", "", trim($pid));
         $islandora_object = islandora_object_load($pid);
