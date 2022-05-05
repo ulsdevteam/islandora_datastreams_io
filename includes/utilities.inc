@@ -14,15 +14,10 @@ function islandora_datastreams_io_get_exported_files($dir) {
 }
 
 function islandora_datastreams_io_ds_file_parts($filename) {
-  $last_ = strrchr($filename, "_");
+  $last_ = strrchr($filename, ".");
   if (strlen($last_)) {
-    $dsid_ext = substr($filename, (-strlen($last_) + 1));
-    $ns_pid = substr($filename, 0, (strlen($filename) - strlen($last_)));
-
-    @list($namespace, $pid) = explode("_", $filename, 2);
-    @list($dsid, $ext) = explode(".", $dsid_ext);
-
-    $pid = str_replace("_" . $dsid . "." . $ext, "", $pid);
+    @list($namespace, $pid, $dsid) = explode("_", $filename, 3);
+    @list($dsid, $ext) = explode(".", $dsid);
     return array('namespace' => $namespace, 'pid' => $namespace . ':' . $pid, 'dsid' => $dsid, 'extension' => $ext);
   }
   else {
